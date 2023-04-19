@@ -1,0 +1,86 @@
+15:34:57.1861469 http://localhost:8888/ProfileService GetProfile Request
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">  
+   <soap:Header>
+         <version>1.0</version>
+         <appName>EasyMock Demo</appName>             
+         <hostName>Demo Workstation</hostName>
+         <userId>tester</userId>          
+         <timeStamp>2023–01–20T14:22:07.425</timeStamp>
+   </soap:Header>    
+   <soap:Body>
+      <GetProfileRequest>
+          <profileType>Personal</profileType>
+          <profileId>1000001</profileId>          
+      </GetProfileRequest>
+   </soap:Body>
+</soap:Envelope>
+
+15:34:57.1861469 http://localhost:8888/ProfileService GetProfile Response
+<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<soapenv:Header>
+		<requestId>e77ee721-7e71-44db-8f84-08fd5040c458</requestId>
+	</soapenv:Header>
+	<soapenv:Body>
+		<GetProfileResponse>
+			<name>
+				<namePrefix>Ms.</namePrefix>
+				<firstName>JOHN</firstName>
+				<lastName>SMITH</lastName>
+			</name>
+			<address>
+				<streetNumber>100</streetNumber>
+				<streetName>KING STREET WEST</streetName>
+				<city>Toronto</city>
+				<province>Ontario</province>
+				<country>Canada</country>
+				<postalCode>M5N3R7</postalCode>
+			</address>
+		</GetProfileResponse>
+	</soapenv:Body>
+</soapenv:Envelope>
+
+15:34:57.1861469 http://localhost:8888/ProfileService GetProfile Request
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">  
+   <soap:Header>
+         <version>1.0</version>
+         <appName>EasyMock Demo</appName>             
+         <hostName>Demo Workstation</hostName>
+         <userId>tester</userId>          
+         <timeStamp>2023–01–20T14:22:08.425</timeStamp>
+   </soap:Header>    
+   <soap:Body>
+      <GetProfileRequest>
+          <profileType>Personal</profileType>
+          <profileId>1000002</profileId>          
+      </GetProfileRequest>
+   </soap:Body>
+</soap:Envelope>
+
+15:34:57.1861469 http://localhost:8888/ProfileService GetProfile Response
+<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<soapenv:Header>
+		<requestId>cc422093-a929-4116-af59-96d3db425555</requestId>
+	</soapenv:Header>
+	<soapenv:Body>
+		<GetProfileResponse>
+			<name>
+				<namePrefix>Ms.</namePrefix>
+				<firstName>TERRY</firstName>
+				<lastName>CLARK</lastName>
+			</name>
+			<address>
+				<streetNumber>1800</streetNumber>
+				<streetName>YOUNG STREET</streetName>
+				<city>Toronto</city>
+				<province>Ontario</province>
+				<country>Canada</country>
+				<postalCode>M5N6P8</postalCode>
+			</address>
+		</GetProfileResponse>
+	</soapenv:Body>
+</soapenv:Envelope>
+

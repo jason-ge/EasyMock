@@ -1,0 +1,8 @@
+{
+  "ProfileService": {
+    "GetProfile": [
+      "profileType",
+      "profileId"
+    ]
+  }
+}

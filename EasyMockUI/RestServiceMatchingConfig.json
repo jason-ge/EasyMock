@@ -1,0 +1,13 @@
+{
+  "/api/paymentservice": {
+    "POST": [
+      "paymentRequest.type",
+      "paymentRequest.biller"
+    ]
+  },
+  "/api/customer/get": {
+    "POST": [
+      "id"
+    ]
+  }
+}

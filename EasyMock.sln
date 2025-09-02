@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyMock.UI", "EasyMockUI\EasyMock.UI.csproj", "{69EBA99A-2660-42EB-B82F-7653C35EBA6A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyMockLib", "EasyMockLib\EasyMockLib.csproj", "{C237E428-40C9-E341-4FAF-7735A1DA9C6E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{69EBA99A-2660-42EB-B82F-7653C35EBA6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69EBA99A-2660-42EB-B82F-7653C35EBA6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69EBA99A-2660-42EB-B82F-7653C35EBA6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69EBA99A-2660-42EB-B82F-7653C35EBA6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C237E428-40C9-E341-4FAF-7735A1DA9C6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C237E428-40C9-E341-4FAF-7735A1DA9C6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C237E428-40C9-E341-4FAF-7735A1DA9C6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C237E428-40C9-E341-4FAF-7735A1DA9C6E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F4A54341-88A6-4D02-97D8-F72603DCA280}
+	EndGlobalSection
+EndGlobal

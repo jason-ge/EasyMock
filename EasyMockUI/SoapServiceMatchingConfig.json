@@ -1,0 +1,11 @@
+{
+  "/crm/customer/customerprofileservice": {
+    "GetCustomerProfile": [
+      "CustomerID"
+    ],
+    "SearchCustomers": [
+      "SearchRequest/FirstName",
+      "SearchRequest/LastName"
+    ]
+  }
+}

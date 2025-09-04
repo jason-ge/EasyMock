@@ -1,7 +1,8 @@
 {
-  "/crm/customer/customerprofileservice": {
-    "GetCustomerProfile": [
-      "CustomerID"
+  "/ProfileService": {
+    "GetProfile": [
+      "profileId",
+      "profileType"
     ],
     "SearchCustomers": [
       "SearchRequest/FirstName",

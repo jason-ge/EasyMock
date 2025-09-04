@@ -30,4 +30,13 @@
   <ItemGroup>
     <ProjectReference Include="..\EasyMockLib\EasyMockLib.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="MockServiceFiles\RestDemo.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="MockServiceFiles\SoapDemo.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

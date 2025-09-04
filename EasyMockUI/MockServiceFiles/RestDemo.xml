@@ -1,18 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ArrayOfMockNode xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <MockNode>
-    <Request>
-      <RequestBody />
-    </Request>
     <Response>
       <ResponseBody>
-        <Content>[
+        <Content><![CDATA[[
   {
     "name": "Afghanistan",
     "code": "AF"
   },
   {
-    "name": "�land Islands",
+    "name": " land Islands",
     "code": "AX"
   },
   {
@@ -983,95 +980,19 @@
     "name": "Zimbabwe",
     "code": "ZW"
   }
-]</Content>
+]]]></Content>
       </ResponseBody>
       <StatusCode>OK</StatusCode>
       <Delay>0</Delay>
     </Response>
-    <Url>Countries</Url>
+    <Url>/api/Countries</Url>
     <MethodName>GET</MethodName>
     <ServiceType>REST</ServiceType>
   </MockNode>
   <MockNode>
-    <Request>
-      <RequestBody>
-        <Content>{
-  "countryRequest": {
-    "code": "CA"
-  }
-}</Content>
-      </RequestBody>
-    </Request>
     <Response>
       <ResponseBody>
-        <Content>[
-  {
-    "name": "Canada",
-    "code": "CA"
-  }
-]</Content>
-      </ResponseBody>
-      <StatusCode>OK</StatusCode>
-      <Delay>0</Delay>
-    </Response>
-    <Url>Countries</Url>
-    <MethodName>POST</MethodName>
-    <ServiceType>REST</ServiceType>
-  </MockNode>
-  <MockNode>
-    <Request>
-      <RequestBody>
-        <Content>{
-  "countryRequest": {
-    "code": "US"
-  }
-}</Content>
-      </RequestBody>
-    </Request>
-    <Response>
-      <ResponseBody>
-        <Content>[
-  {
-    "name": "United States",
-    "code": "US"
-  }
-]</Content>
-      </ResponseBody>
-      <StatusCode>OK</StatusCode>
-      <Delay>0</Delay>
-    </Response>
-    <Url>Countries</Url>
-    <MethodName>POST</MethodName>
-    <ServiceType>REST</ServiceType>
-  </MockNode>
-  <MockNode>
-    <Request>
-      <RequestBody>
-        <Content>{
-  "countryRequest": {
-    "code": "CA",
-    "details": {
-      "population": 38000000,
-      "languages": [
-        "English",
-        "French"
-      ],
-      "region": {
-        "name": "North America",
-        "subregions": [
-          "Northern America",
-          "Central America"
-        ]
-      }
-    },
-    "active": true
-  }
-}</Content>
-      </RequestBody>
-    </Request>
-    <Response>
-      <ResponseBody>
-        <Content>[
+        <Content><![CDATA[[
   {
     "name": "Canada",
     "code": "CA",
@@ -1089,79 +1010,62 @@
     },
     "active": true
   }
-]</Content>
+]]]></Content>
       </ResponseBody>
       <StatusCode>OK</StatusCode>
       <Delay>0</Delay>
     </Response>
-    <Url>Countries/Details</Url>
-    <MethodName>POST</MethodName>
+    <Url>/api/Countries/CA</Url>
+    <MethodName>GET</MethodName>
+    <ServiceType>REST</ServiceType>
+  </MockNode>
+  <MockNode>
+    <Response>
+      <ResponseBody>
+        <Content><![CDATA[[
+  {
+    "name": "Germany",
+    "code": "DE",
+    "population": 83000000,
+    "languages": [
+      "German"
+    ],
+    "region": {
+      "name": "Europe",
+      "subregions": [
+        "Western Europe"
+      ]
+    },
+    "active": false
+  }
+]]]></Content>
+      </ResponseBody>
+      <StatusCode>OK</StatusCode>
+      <Delay>0</Delay>
+    </Response>
+    <Url>/api/Countries/DE</Url>
+    <MethodName>GET</MethodName>
     <ServiceType>REST</ServiceType>
   </MockNode>
   <MockNode>
     <Request>
       <RequestBody>
-        <Content>{
+        <Content><![CDATA[{
   "countryRequest": {
-    "code": "DE",
-    "details": {
-      "population": 83000000,
-      "languages": [
-        "German"
-      ],
-      "region": {
-        "name": "Europe",
-        "subregions": [
-          "Western Europe"
-        ]
-      }
-    },
-    "active": false
+    "code": "XX"
   }
-}</Content>
+}]]></Content>
       </RequestBody>
     </Request>
     <Response>
       <ResponseBody>
-        <Content>[  {
-    "name": "Germany",
-    "code": "DE",
-    "population": 83000000,
-    "languages": ["German"],
-    "region": {
-      "name": "Europe",
-      "subregions": ["Western Europe"]
-    },
-    "active": false
-  }
-]</Content>
+        <Content><![CDATA[]]></Content>
       </ResponseBody>
-      <StatusCode>OK</StatusCode>
-      <Delay>0</Delay>
+      <StatusCode>NotFound</StatusCode>
+      <Delay>5</Delay>
     </Response>
-    <Url>Countries/Details</Url>
-    <MethodName>POST</MethodName>
+    <Url>/api/Countries</Url>
+    <MethodName>PATCH</MethodName>
     <ServiceType>REST</ServiceType>
-  </MockNode> 
-	<MockNode>
-		<Request>
-			<RequestBody>
-				<Content>
-					{
-					"countryRequest": {
-					"code": "XX"
-					}
-					}
-				</Content>
-			</RequestBody>
-		</Request>
-		<Response>
-			<ResponseBody />
-			<StatusCode>NotFound</StatusCode>
-			<Delay>5</Delay>
-		</Response>
-		<Url>Countries</Url>
-		<MethodName>POST</MethodName>
-		<ServiceType>REST</ServiceType>
-	</MockNode>
+  </MockNode>
 </ArrayOfMockNode>

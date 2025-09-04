@@ -21,6 +21,14 @@
                       Command="{Binding DataContext.EditMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
                       IsEnabled="{Binding DataContext.IsMockItemNode, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
                       CommandParameter="{Binding}"/>
+            <MenuItem Header="Copy" 
+                      Command="{Binding DataContext.CopyMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                      IsEnabled="{Binding DataContext.IsMockItemNode, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
+                      CommandParameter="{Binding}"/>
+            <MenuItem Header="Paste" 
+                      Command="{Binding DataContext.PasteMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                      IsEnabled="{Binding DataContext.IsMockFileNode, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
+                      CommandParameter="{Binding}"/>
             <MenuItem Header="Remove" 
                       Command="{Binding DataContext.RemoveMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
                       CommandParameter="{Binding}" />
@@ -34,11 +42,6 @@
                       CommandParameter="{Binding}"/>
         </ContextMenu>
         <Style x:Key="ModernMenuButton" TargetType="Button">
-            <Setter Property="Foreground" Value="Black"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#CCC"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="20,4"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="Template">
@@ -48,7 +51,7 @@
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="4">
+                        CornerRadius="1">
                             <Border Padding="{TemplateBinding Padding}">
                                 <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
                             </Border>
@@ -74,7 +77,7 @@
    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
+            <RowDefinition Height="30"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -82,19 +85,26 @@
             <ColumnDefinition Width="5"/>
             <ColumnDefinition Width="7*"/>
         </Grid.ColumnDefinitions>
-
+        <ToolBar Grid.Row="0" Grid.Column="0">
+            <Button Command="{Binding NewMockFileCommand}" Content="New Mock File" Style="{StaticResource ModernMenuButton}" />
+            <Separator />
+            <Button Command="{Binding LoadMockFileCommand}" Content="Load Mock File" Style="{StaticResource ModernMenuButton}" />
+            <Separator />
+            <Button Command="{Binding LoadDevLogCommand}" Content="Load Log File" Style="{StaticResource ModernMenuButton}" />
+        </ToolBar>
         <!-- Custom Menu Bar using StackPanel and Buttons -->
-        <StackPanel Orientation="Horizontal" Background="#EEE" VerticalAlignment="Stretch" Grid.Row="0" Grid.Column="2">
-            <Button Content="Start Service" Height="30" Margin="10,0" Style="{StaticResource ModernMenuButton}" Command="{Binding StartServiceCommand}"/>
-            <Button Content="Stop Service" Height="30" Margin="10,0" Style="{StaticResource ModernMenuButton}" Command="{Binding StopServiceCommand}"/>
-            <Button Content="Load Mock File" Height="30" Margin="10,0" Style="{StaticResource ModernMenuButton}" Command="{Binding LoadMockFileCommand}"/>
-            <Button Content="Clear Log" Height="30" Margin="10,0" Style="{StaticResource ModernMenuButton}" Command="{Binding ClearLogCommand}"/>
-            <Button Content="Save Log" Height="30" Margin="10,0" Style="{StaticResource ModernMenuButton}" Command="{Binding SaveLogCommand}"/>
-            <Button Content="Load Dev Log" Height="30" Margin="10,0" Style="{StaticResource ModernMenuButton}" Command="{Binding LoadDevLogCommand}"/>
-        </StackPanel>
+        <ToolBar Grid.Row="0" Grid.Column="2" VerticalAlignment="Stretch">
+            <Button Content="Start Service" Style="{StaticResource ModernMenuButton}" Command="{Binding StartServiceCommand}"/>
+            <Separator />
+            <Button Content="Stop Service" Style="{StaticResource ModernMenuButton}" Command="{Binding StopServiceCommand}"/>
+            <Separator />
+            <Button Content="Clear Log" Style="{StaticResource ModernMenuButton}" Command="{Binding ClearLogCommand}"/>
+            <Separator />
+            <Button Content="Save Log" Style="{StaticResource ModernMenuButton}" Command="{Binding SaveLogCommand}"/>
+        </ToolBar>
 
         <!-- TreeView Sidebar -->
-        <TreeView Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" x:Name="treeView" ItemsSource="{Binding RootNodes}">
+        <TreeView Grid.Row="1" Grid.Column="0" x:Name="treeView" ItemsSource="{Binding RootNodes}">
             <i:Interaction.Triggers>
                 <i:EventTrigger EventName="MouseDoubleClick">
                     <i:InvokeCommandAction Command="{Binding TreeNodeDoubleClickCommand}" 

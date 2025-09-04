@@ -10,7 +10,5 @@ namespace EasyMockLib.Models
         public required string MethodName { get; set; }
         public string? Description { get; set; }
         public ServiceType ServiceType { get; set; }
-        [XmlIgnore]
-        public MockFileNode? Parent { get; set; }
     }
 }

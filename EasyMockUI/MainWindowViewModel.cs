@@ -35,9 +35,11 @@ namespace EasyMock.UI
         private readonly IFileDialogService _fileDialogService;
         private StringBuilder _logOutput = new StringBuilder();
         private readonly Dictionary<string, List<MockTreeNode>> MockNodeLookup = [];
+        private MockNode _copiedNode;
 
         public ObservableCollection<MockTreeNode> RootNodes { get; } = [];
         public ObservableCollection<RequestResponsePair> RequestResponsePairs { get; } = [];
+        public ICommand NewMockFileCommand { get; }
         public ICommand ClearLogCommand { get; }
         public ICommand LoadMockFileCommand { get; }
         public ICommand LoadDevLogCommand { get; }
@@ -51,6 +53,8 @@ namespace EasyMock.UI
         public ICommand SaveLogCommand { get; }
         public ICommand? AddMockNodeCommand { get; }
         public ICommand? EditMockNodeCommand { get; }
+        public ICommand? CopyMockNodeCommand { get; }
+        public ICommand? PasteMockNodeCommand { get; }
         public ICommand? RefreshMockNodeCommand { get; }
         public ICommand? RemoveMockNodeCommand { get; }
         public ICommand? SaveMockNodeCommand { get; }
@@ -91,6 +95,7 @@ namespace EasyMock.UI
             }, _ => RequestResponsePairs.Count > 0);
 
             SaveLogCommand = new RelayCommand<object>(OnSaveLog, _ => RequestResponsePairs.Count > 0);
+            NewMockFileCommand = new RelayCommand<object>(NewMockFile);
 
             LoadMockFileCommand = new RelayCommand<object>(_ => LoadMockFile(), _ => IsMockTreeLoaded);
             StartServiceCommand = new RelayCommand<object>(_ => StartWebServer(), _ => !IsServiceRunning && IsMockTreeLoaded);
@@ -100,6 +105,8 @@ namespace EasyMock.UI
             ResponseBodyMouseLeaveCommand = new RelayCommand<RequestResponsePair>(OnResponseBodyMouseLeave);
             AddMockNodeCommand = new RelayCommand<MockTreeNode?>(OnAddMockNodeAction);
             EditMockNodeCommand = new RelayCommand<MockTreeNode?>(OnEditMockNodeAction);
+            CopyMockNodeCommand = new RelayCommand<MockTreeNode?>(OnCopyMockNodeAction);
+            PasteMockNodeCommand = new RelayCommand<MockTreeNode?>(OnPasteMockNodeAction, _ => _copiedNode != null);
             RefreshMockNodeCommand = new RelayCommand<MockTreeNode?>(OnRefreshMockNodeAction);
             RemoveMockNodeCommand = new RelayCommand<MockTreeNode?>(OnRemoveMockNodeAction);
             SaveMockNodeCommand = new RelayCommand<MockTreeNode?>(OnSaveMockNodeAction);
@@ -171,6 +178,26 @@ namespace EasyMock.UI
             }
         }
 
+        private void UpdateMockLookup(MockTreeNode mockTreeNode, string url)
+        {
+            var mockFileNode = mockTreeNode.Tag as MockFileNode;
+            if (mockFileNode == null)
+            {
+                throw new ArgumentException($"{nameof(mockTreeNode)} is not MockFileNode type");
+            }
+            if (MockNodeLookup.ContainsKey(url.ToLower()))
+            {
+                var list = MockNodeLookup[url.ToLower()];
+                if (list.IndexOf(mockTreeNode) < 0)
+                {
+                    list.Add(mockTreeNode);
+                }
+            }
+            else
+            {
+                MockNodeLookup.Add(url.ToLower(), [mockTreeNode]);
+            }
+        }
         private void RemoveMockLookup(MockTreeNode mockTreeNode)
         {
             var mockFileNode = mockTreeNode.Tag as MockFileNode;
@@ -255,6 +282,44 @@ namespace EasyMock.UI
             RootNodes.Insert(0, mockTreeNode);
         }
 
+        private void NewMockFile(object? parameter)
+        {
+            var viewModel = new NewMockFileViewModel();
+            var newMockFileWindow = new NewMockFileWindow() { DataContext = viewModel, Owner = Application.Current.MainWindow };
+
+            if (newMockFileWindow.ShowDialog() == true)
+            {
+                var fileName = Path.Combine(ConfigurationManager.AppSettings["MockFileFolder"], viewModel.MockFileName);
+                if (File.Exists(fileName))
+                {
+                    MessageBox.Show("The mock file already exists.");
+                    return;
+                }
+                MockTreeNode node = new MockTreeNode(new MockFileNode()
+                {
+                    MockFile = fileName,
+                });
+                node.IsDirty = true;
+                int i = 0;
+                for (; i < RootNodes.Count; i++)
+                {
+                    if (Path.GetFileName(((MockFileNode)RootNodes[i].Tag).MockFile).CompareTo(viewModel.MockFileName) < 0)
+                    {
+                        continue;
+                    }
+                    break;
+                }
+                if (i == RootNodes.Count)
+                {
+                    RootNodes.Add(node);
+                }
+                else
+                {
+                    RootNodes.Insert(i, node);
+                }
+            }
+        }
+
         private void LoadMockFile()
         {
             var filePath = _fileDialogService.OpenFile("XML Files (*.xml)|*.xml");
@@ -326,7 +391,6 @@ namespace EasyMock.UI
             {
                 MockNode node = new MockNode()
                 {
-                    Parent = mockFileNode,
                     Request = new Request(),
                     Response = new Response(),
                     Url = pair.Url,
@@ -542,7 +606,6 @@ namespace EasyMock.UI
                     var viewModel = editor.DataContext as MockNodeEditorViewModel;
                     var newMockNode = new MockNode()
                     {
-                        Parent = mockFileNode,
                         ServiceType = viewModel.ServiceType,
                         MethodName = viewModel.MethodName,
                         Url = viewModel.Url,
@@ -568,6 +631,46 @@ namespace EasyMock.UI
                     node.Children.Add(new MockTreeNode(newMockNode) { Parent = node });
                     node.IsDirty = true;
                 }
+            }
+        }
+
+        private void OnCopyMockNodeAction(MockTreeNode? node)
+        {
+            if (node != null && node.Tag is MockNode mockNode && mockNode != null)
+            {
+                _copiedNode = mockNode;
+            }
+        }
+
+        private void OnPasteMockNodeAction(MockTreeNode? node)
+        {
+            if (node != null && node.Tag is MockFileNode mockFileNode && mockFileNode != null && _copiedNode != null)
+            {
+                var mockNode = new MockNode()
+                {
+                    Url = _copiedNode.Url,
+                    MethodName = _copiedNode.MethodName,
+                    Description = _copiedNode.Description,
+                    ServiceType = _copiedNode.ServiceType,
+                };
+                if (_copiedNode.Request != null)
+                {
+                    mockNode.Request = new Request();
+                    mockNode.Request.RequestBody.Content = _copiedNode.Request.RequestBody.Content;
+                }
+                if (_copiedNode.Response != null)
+                {
+                    mockNode.Response = new Response();
+                    mockNode.Response.ResponseBody.Content = _copiedNode.Response.ResponseBody.Content;
+                    mockNode.Response.StatusCode = _copiedNode.Response.StatusCode;
+                    mockNode.Response.Delay = _copiedNode.Response.Delay;
+                }
+
+                mockFileNode.Nodes.Add(mockNode);
+                node.Children.Add(new MockTreeNode(mockNode) { Parent = node });
+                node.IsDirty = true;
+                UpdateMockLookup(node, mockNode.Url);
+                _copiedNode = null!;
             }
         }
 
@@ -625,6 +728,7 @@ namespace EasyMock.UI
                     if (node.Parent is MockTreeNode mockFileNode)
                     {
                         mockFileNode.IsDirty = true;
+                        UpdateMockLookup(mockFileNode, mockNode.Url);
                     }
                 }
             }

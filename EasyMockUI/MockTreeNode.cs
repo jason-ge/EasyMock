@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Net;
+using System.Windows;
 
 namespace EasyMock.UI
 {
@@ -50,27 +51,27 @@ namespace EasyMock.UI
             Tag = node;
         }
 
-        public bool IsMockItemNode
+        public Visibility MockNodeMenuItemVisibility
         {
             get
             {
-                return NodeType == NodeTypes.MockItem;
+                return NodeType == NodeTypes.MockItem ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
-        public bool IsMockFileNode
+        public Visibility MockFileMenuItemVisibility
         {
             get
             {
-                return NodeType == NodeTypes.MockFile;
+                return NodeType == NodeTypes.MockFile ? Visibility.Visible: Visibility.Collapsed;
             }
         }
 
-        public bool CanSave
+        public Visibility SaveMenuItemVisibility
         {
             get
             {
-                return IsDirty && IsMockFileNode;
+                return IsDirty && NodeType == NodeTypes.MockFile ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -98,7 +99,7 @@ namespace EasyMock.UI
                 {
                     _isDirty = value;
                     OnPropertyChanged(nameof(IsDirty));
-                    OnPropertyChanged(nameof(CanSave));
+                    OnPropertyChanged(nameof(SaveMenuItemVisibility));
                 }
             }
         }

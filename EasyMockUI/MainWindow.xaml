@@ -15,30 +15,30 @@
         <ContextMenu x:Key="TreeViewItemContextMenu" x:Shared="False">
             <MenuItem Header="Add" 
                       Command="{Binding DataContext.AddMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                      IsEnabled="{Binding DataContext.IsMockFileNode, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
+                      Visibility="{Binding DataContext.MockFileMenuItemVisibility, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
                       CommandParameter="{Binding}" />
             <MenuItem Header="Edit" 
                       Command="{Binding DataContext.EditMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                      IsEnabled="{Binding DataContext.IsMockItemNode, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
+                      Visibility="{Binding DataContext.MockNodeMenuItemVisibility, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
                       CommandParameter="{Binding}"/>
             <MenuItem Header="Copy" 
                       Command="{Binding DataContext.CopyMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                      IsEnabled="{Binding DataContext.IsMockItemNode, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
+                      Visibility="{Binding DataContext.MockNodeMenuItemVisibility, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
                       CommandParameter="{Binding}"/>
             <MenuItem Header="Paste" 
                       Command="{Binding DataContext.PasteMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                      IsEnabled="{Binding DataContext.IsMockFileNode, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
+                      Visibility="{Binding DataContext.MockFileMenuItemVisibility, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
                       CommandParameter="{Binding}"/>
             <MenuItem Header="Remove" 
                       Command="{Binding DataContext.RemoveMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
                       CommandParameter="{Binding}" />
             <MenuItem Header="Refresh" 
                       Command="{Binding DataContext.RefreshMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                      IsEnabled="{Binding DataContext.IsMockFileNode, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
+                      Visibility="{Binding DataContext.MockFileMenuItemVisibility, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
                       CommandParameter="{Binding}" />
             <MenuItem Header="Save" 
                       Command="{Binding DataContext.SaveMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                      IsEnabled="{Binding DataContext.CanSave, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
+                      Visibility="{Binding DataContext.SaveMenuItemVisibility, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
                       CommandParameter="{Binding}"/>
         </ContextMenu>
         <Style x:Key="ModernMenuButton" TargetType="Button">
@@ -58,10 +58,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#F0F8FF"/>
+                                <Setter TargetName="border" Property="Background" Value="#91CAF5"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="#3399FF"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#91CAF5"/>
                                 <Setter TargetName="border" Property="BorderBrush" Value="#3399FF"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">

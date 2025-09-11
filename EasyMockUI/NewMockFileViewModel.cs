@@ -14,7 +14,7 @@ namespace EasyMock.UI
             get { return _mockFileName; }
             set
             {
-                _mockFileName = value; ;
+                _mockFileName = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MockFileName)));
             }
         }

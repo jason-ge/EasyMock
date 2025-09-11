@@ -183,7 +183,7 @@
                             <DataTemplate>
                                 <Expander Margin="4">
                                     <Expander.Header>
-                                        <TextBox Text="{Binding RequestSummary, Mode=OneWay}"
+                                        <TextBox Text="{Binding Title, Mode=OneWay}"
                                             IsReadOnly="True"
                                             BorderThickness="0"
                                             Background="Transparent"
@@ -223,7 +223,7 @@
                                                  VerticalScrollBarVisibility="Auto"
                                                  HorizontalScrollBarVisibility="Auto"
                                                  Grid.Row="1"/>
-                                        <TextBlock Text="{Binding ResponseSummary}" FontWeight="Bold" Margin="0,0,0,2" Grid.Row="2"/>
+                                        <TextBlock Text="Response:" FontWeight="Bold" Margin="0,0,0,2" Grid.Row="2"/>
                                         <TextBox Text="{Binding ResponseBody}"
                                                  IsReadOnly="True"
                                                  TextWrapping="NoWrap"
@@ -248,7 +248,6 @@
                                                 </i:EventTrigger>
                                             </i:Interaction.Triggers>
                                         </TextBox>
-                                        <TextBlock Text="{Binding MockFileSource.Tag.MockFile, StringFormat=MockFile: {0}}" FontWeight="Bold" Margin="0,0,0,2" Grid.Row="4" />
                                     </Grid>
                                 </Expander>
                             </DataTemplate>

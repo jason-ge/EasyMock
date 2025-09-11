@@ -274,7 +274,7 @@ namespace EasyMock.UI
 
         private void LoadDevLog()
         {
-            var filePath = _fileDialogService.OpenFile("Dev Log Files (*.txt)|*.txt");
+            var filePath = _fileDialogService.OpenFile("Dev Log Files|*.txt;*.log");
             if (string.IsNullOrEmpty(filePath)) return;
 
             var mockTreeNode = new MockTreeNode(new DevLogParser().Parse(filePath)) { IsDirty = true };
@@ -400,7 +400,7 @@ namespace EasyMock.UI
 
                 node.Request.RequestBody.Content = pair.RequestBody;
                 node.Response.ResponseBody.Content = pair.ResponseBody;
-                node.Response.StatusCode = (HttpStatusCode)pair.StatusCode;
+                node.Response.StatusCode = pair.StatusCode;
                 nodes.Add(node);
             }
 
@@ -439,6 +439,7 @@ namespace EasyMock.UI
 
         private void ProcessRequest(HttpListenerContext context)
         {
+            DateTime timestamp = DateTime.Now;
             using (var response = context.Response)
             {
                 (var mock, var method, var requestContent) = GetMock(context);
@@ -448,12 +449,12 @@ namespace EasyMock.UI
                     if (mock != null)
                     {
                         SendMockResponse(mock, context, response);
-                        AddRequestResponsePair(mock, context.Request.Url.PathAndQuery, serviceType, method, requestContent);
+                        AddRequestResponsePair(mock, context.Request.Url.PathAndQuery, serviceType, method, requestContent, DateTime.Now.Subtract(timestamp).TotalMilliseconds);
                     }
                     else
                     {
                         SendResponseContent("", HttpStatusCode.NotFound, context, response);
-                        AddRequestResponsePair(null, context.Request.Url.PathAndQuery, serviceType, method, requestContent);
+                        AddRequestResponsePair(null, context.Request.Url.PathAndQuery, serviceType, method, requestContent, DateTime.Now.Subtract(timestamp).TotalMilliseconds);
                     }
                 }
                 catch (Exception e)
@@ -461,7 +462,7 @@ namespace EasyMock.UI
                     SendResponseContent("", HttpStatusCode.InternalServerError, context, response);
 
                     // Optionally log the exception as a request/response pair
-                    AddRequestResponsePair(null, context.Request.Url.PathAndQuery, serviceType, method, requestContent, e);
+                    AddRequestResponsePair(null, context.Request.Url.PathAndQuery, serviceType, method, requestContent, DateTime.Now.Subtract(timestamp).TotalMilliseconds, e);
                 }
             }
         }
@@ -812,7 +813,7 @@ namespace EasyMock.UI
             OnPropertyChanged(nameof(LogOutput));
         }
 
-        public void AddRequestResponsePair(MockTreeNode? node, string url, ServiceType serviceType, string method, string requestContent, Exception? ex = null)
+        public void AddRequestResponsePair(MockTreeNode? node, string url, ServiceType serviceType, string method, string requestContent, double responseTime, Exception? ex = null)
         {
             var mock = node?.Tag as MockNode;
             string requestBody = requestContent;
@@ -823,26 +824,26 @@ namespace EasyMock.UI
                 Method = method,
                 Url = url,
                 ServiceType = serviceType,
+                ResponseTimeInMs = (long)responseTime,
                 RequestBody = requestContent,
                 ResponseBody = mock?.Response?.ResponseBody?.Content ?? string.Empty,
-                MockFileSource = node?.Parent ?? null,
                 MockNodeSource = node
             };
             if (mock == null || mock.Response == null)
             {
                 if (ex == null)
                 {
-                    pair.StatusCode = 404;
+                    pair.StatusCode = HttpStatusCode.NotFound;
                 }
                 else
                 {
-                    pair.StatusCode = 500;
+                    pair.StatusCode = HttpStatusCode.InternalServerError;
                     pair.ResponseBody = ex.Message;
                 }
             }
             else
             {
-                pair.StatusCode = (int)mock.Response.StatusCode;
+                pair.StatusCode = mock.Response.StatusCode;
             }
             Application.Current.Dispatcher.Invoke(() =>
                 {

@@ -1,30 +1,29 @@
 using EasyMockLib.Models;
+using System.Net;
 using System.Windows.Controls;
 
 namespace EasyMock.UI;
 
 public class RequestResponsePair
 {
-    public string RequestSummary
+    public string Title
     {
         get
         {
-            return $"{Url} -  {Method}";
+            return $"{Url} - {Method}: {StatusCode} {ResponseTimeInMs}ms";
         }
     }
-    public string ResponseSummary
+
+    public long ResponseTimeInMs
     {
-        get
-        {
-            return $"Response: StatusCode - {StatusCode}";
-        }
+        get; set;
     }
 
     public bool IsErrorStatusCode
     {
         get
         {
-            return StatusCode < 200 || StatusCode >= 300;
+            return (int)StatusCode < 200 || (int)StatusCode >= 300;
         }
     }
     public string Url { get; set; }
@@ -32,7 +31,6 @@ public class RequestResponsePair
     public ServiceType ServiceType { get; set; }
     public string? RequestBody { get; set; }
     public string? ResponseBody { get; set; }
-    public MockTreeNode? MockFileSource { get; set; }
     public MockTreeNode? MockNodeSource { get; set; }
-    public int StatusCode { get; set; }
+    public HttpStatusCode StatusCode { get; set; }
 }

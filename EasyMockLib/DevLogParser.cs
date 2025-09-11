@@ -12,8 +12,8 @@ namespace EasyMockLib
         private const string DevSoapRequestPattern = "^Request:\\s*(http\\S+)$";
         private const string DevSoapResponsePattern = "^Response:\\s*(http\\S+)$";
 
-        private const string DevRestRequestPattern1  =  "^.*DevListener\\s+(\\w+)\\s+(http\\S+)\\s+Request$";
-        private const string DevRestResponsePattern1 = "^.*DevListener\\s+(\\w+)\\s+(http\\S+)\\s+Response$";
+        private const string DevRestRequestPattern1  = "^(\\w+)\\s+(http\\S+)\\s+Request$";
+        private const string DevRestResponsePattern1 = "^(\\w+)\\s+(http\\S+)\\s+Response$";
 
         private const string DevRestRequestPattern2  = "^.*MessageHandler\\s+(\\w+)\\s+(http\\S+)\\s+Request$";
         private const string DevRestResponsePattern2 = "^.*MessageHandler\\s+(\\w+)\\s+(http\\S+)\\s+Response$";

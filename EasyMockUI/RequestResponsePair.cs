@@ -1,6 +1,5 @@
 using EasyMockLib.Models;
 using System.Net;
-using System.Windows.Controls;
 
 namespace EasyMock.UI;
 
@@ -14,10 +13,7 @@ public class RequestResponsePair
         }
     }
 
-    public long ResponseTimeInMs
-    {
-        get; set;
-    }
+    public long ResponseTimeInMs { get; set; }
 
     public bool IsErrorStatusCode
     {

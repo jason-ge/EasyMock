@@ -1,11 +1,5 @@
-﻿using EasyMockLib.Models;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -37,7 +31,7 @@ namespace EasyMock.UI
         {
             if (string.IsNullOrWhiteSpace(MockFileName))
             {
-                MessageBox.Show("Mock file name cannot be empty", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Mock file name cannot be empty.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             else if (string.IsNullOrEmpty(Path.GetExtension(MockFileName)))

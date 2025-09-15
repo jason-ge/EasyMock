@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -16,8 +15,8 @@ namespace EasyMockLib
         private const string DevRestRequestPattern0  = "^(\\w+)\\s+(http\\S+)\\s+Request$";
         private const string DevRestResponsePattern0 = "^(\\w+)\\s+(http\\S+)\\s+Response$";
 
-        private const string DevRestRequestPattern1  = "^.*DevListerner\\s+(\\w+)\\s+(http\\S+)\\s+Request$";
-        private const string DevRestResponsePattern1 = "^.*DevListerner\\s+(\\w+)\\s+(http\\S+)\\s+Response$";
+        private const string DevRestRequestPattern1  = "^.*DevListener\\s+(\\w+)\\s+(http\\S+)\\s+Request$";
+        private const string DevRestResponsePattern1 = "^.*DevListener\\s+(\\w+)\\s+(http\\S+)\\s+Response$";
 
         private const string DevRestRequestPattern2  = "^.*MessageHandler\\s+(\\w+)\\s+(http\\S+)\\s+Request$";
         private const string DevRestResponsePattern2 = "^.*MessageHandler\\s+(\\w+)\\s+(http\\S+)\\s+Response$";

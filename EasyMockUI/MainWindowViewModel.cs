@@ -37,7 +37,7 @@ namespace EasyMock.UI
         private readonly Dictionary<string, List<MockTreeNode>> MockNodeLookup = [];
         private MockNode _copiedNode;
 
-        public ObservableCollection<MockTreeNode> RootNodes { get; } = [];
+        public ObservableCollection<MockTreeNode> RootNodes { get; }
         public ObservableCollection<RequestResponsePair> RequestResponsePairs { get; } = [];
         public ICommand NewMockFileCommand { get; }
         public ICommand ClearLogCommand { get; }
@@ -74,6 +74,7 @@ namespace EasyMock.UI
 
         public MainWindowViewModel(IFileDialogService fileDialogService, IDialogService dialogService)
         {
+            List<MockTreeNode> mockTreeNodes = [];
             foreach (var file in Directory.EnumerateFiles(ConfigurationManager.AppSettings["MockFileFolder"], "*.xml"))
             {
                 var mockTreeNode = new MockTreeNode(new MockFileNode()
@@ -81,8 +82,9 @@ namespace EasyMock.UI
                     MockFile = file,
                     Nodes = ParseXML(file)
                 });
-                RootNodes.Add(mockTreeNode);
+                mockTreeNodes.Add(mockTreeNode);
             }
+            RootNodes = new ObservableCollection<MockTreeNode>(mockTreeNodes);
             SyncMockLookup();
 
             LoadDevLogCommand = new RelayCommand<object?>(_ => LoadDevLog(), _ => IsMockTreeLoaded);
@@ -277,7 +279,10 @@ namespace EasyMock.UI
             var filePath = _fileDialogService.OpenFile("Dev Log Files|*.txt;*.log");
             if (string.IsNullOrEmpty(filePath)) return;
 
-            var mockTreeNode = new MockTreeNode(new DevLogParser().Parse(filePath)) { IsDirty = true };
+            var mockTreeNode = new MockTreeNode(new DevLogParser().Parse(filePath))
+            {
+                NodeType = NodeTypes.LogFile
+            };
             PrependMockLookup(mockTreeNode);
             RootNodes.Insert(0, mockTreeNode);
         }
@@ -767,15 +772,14 @@ namespace EasyMock.UI
                     if (node.IsDirty)
                     {
                         var result = MessageBox.Show(
-                            "You have made changes to the mockup. Do you want to save it before remove it?",
+                            "You have made changes to the mockup. Do you want to discard the changes?",
                             "Confirmation", MessageBoxButton.YesNo);
                         if (result == MessageBoxResult.Yes)
                         {
-                            SaveMock(node);
+                            RemoveMockLookup(node);
+                            RootNodes.Remove(node);
                         }
                     }
-                    RemoveMockLookup(node);
-                    RootNodes.Remove(node);
                 }
                 else if (node.Tag is MockNode mockNode && mockNode != null)
                 {

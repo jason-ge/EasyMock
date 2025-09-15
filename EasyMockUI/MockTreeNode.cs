@@ -9,6 +9,7 @@ namespace EasyMock.UI
 {
     public enum NodeTypes
     {
+        LogFile,
         MockFile,
         MockItem
     }
@@ -71,7 +72,7 @@ namespace EasyMock.UI
         {
             get
             {
-                return IsDirty && NodeType == NodeTypes.MockFile ? Visibility.Visible : Visibility.Collapsed;
+                return IsDirty && NodeType != NodeTypes.MockItem ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 

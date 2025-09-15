@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -9,11 +10,14 @@ namespace EasyMockLib
 {
     public class DevLogParser
     {
-        private const string DevSoapRequestPattern = "^Request:\\s*(http\\S+)$";
+        private const string DevSoapRequestPattern  = "^Request:\\s*(http\\S+)$";
         private const string DevSoapResponsePattern = "^Response:\\s*(http\\S+)$";
 
-        private const string DevRestRequestPattern1  = "^(\\w+)\\s+(http\\S+)\\s+Request$";
-        private const string DevRestResponsePattern1 = "^(\\w+)\\s+(http\\S+)\\s+Response$";
+        private const string DevRestRequestPattern0  = "^(\\w+)\\s+(http\\S+)\\s+Request$";
+        private const string DevRestResponsePattern0 = "^(\\w+)\\s+(http\\S+)\\s+Response$";
+
+        private const string DevRestRequestPattern1  = "^.*DevListerner\\s+(\\w+)\\s+(http\\S+)\\s+Request$";
+        private const string DevRestResponsePattern1 = "^.*DevListerner\\s+(\\w+)\\s+(http\\S+)\\s+Response$";
 
         private const string DevRestRequestPattern2  = "^.*MessageHandler\\s+(\\w+)\\s+(http\\S+)\\s+Request$";
         private const string DevRestResponsePattern2 = "^.*MessageHandler\\s+(\\w+)\\s+(http\\S+)\\s+Response$";
@@ -54,28 +58,14 @@ namespace EasyMockLib
                         ProcessSoapResponse(reader, m, pendingNodes, line);
                         continue;
                     }
-                    m = Regex.Match(line, DevRestRequestPattern1);
+                    m = FindRestRequest(line);
                     if (m.Success)
                     {
                         // Found a REST request
                         pendingNodes.Add(ProcessRestRequest(reader, m));
                         continue;
                     }
-                    m = Regex.Match(line, DevRestResponsePattern1);
-                    if (m.Success)
-                    {
-                        // Found a REST response
-                        ProcessRestResponse(reader, m, pendingNodes);
-                        continue;
-                    }
-                    m = Regex.Match(line, DevRestRequestPattern2);
-                    if (m.Success)
-                    {
-                        // Found a REST request
-                        pendingNodes.Add(ProcessRestRequest(reader, m));
-                        continue;
-                    }
-                    m = Regex.Match(line, DevRestResponsePattern2);
+                    m = FindRestResponse(line);
                     if (m.Success)
                     {
                         // Found a REST response
@@ -96,6 +86,46 @@ namespace EasyMockLib
                 root.Nodes.Add(node);
             }
             return root;
+        }
+
+        private Match FindRestRequest(string line)
+        {
+            Match m = Regex.Match(line, DevRestRequestPattern0);
+            if (m.Success)
+            {
+                return m;
+            }
+            m = Regex.Match(line, DevRestRequestPattern1);
+            if (m.Success)
+            {
+                return m;
+            }
+            m = Regex.Match(line, DevRestRequestPattern2);
+            if (m.Success)
+            {
+                return m;
+            }
+            return m;
+        }
+
+        private Match FindRestResponse(string line)
+        {
+            Match m = Regex.Match(line, DevRestResponsePattern0);
+            if (m.Success)
+            {
+                return m;
+            }
+            m = Regex.Match(line, DevRestResponsePattern1);
+            if (m.Success)
+            {
+                return m;
+            }
+            m = Regex.Match(line, DevRestResponsePattern2);
+            if (m.Success)
+            {
+                return m;
+            }
+            return m;
         }
 
         private MockNode ProcessSoapRequest(StreamReader reader, Match m, string line)

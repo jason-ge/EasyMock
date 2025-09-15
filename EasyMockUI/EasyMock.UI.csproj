@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>EasyMock.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,5 +39,8 @@
     <None Update="MockServiceFiles\SoapDemo.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <SplashScreen Include="EasyMock.jpg" />
   </ItemGroup>
 </Project>

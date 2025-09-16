@@ -18,7 +18,7 @@ namespace EasyMockLib.Models
             var mocks = this.Nodes.Where(m =>
             m.ServiceType == serviceType &&
             m.MethodName.Equals(method, StringComparison.OrdinalIgnoreCase) &&
-            m.Url.Equals(url, StringComparison.OrdinalIgnoreCase));
+            MatchUrl(m, url));
 
             if (mocks.Any())
             {
@@ -38,6 +38,38 @@ namespace EasyMockLib.Models
                 }
             }
             return null!;
+        }
+
+        private bool MatchUrl(MockNode mock, string url)
+        {
+            if (mock.Url.Equals(url, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            else if (url.IndexOf('?') > -1)
+            {
+                var incomingQuery = ConvertQueryToDictionary(url);
+                var mockQuery = ConvertQueryToDictionary(mock.Url);
+                return incomingQuery.ContainsEqual(mockQuery);
+            }
+            else
+            {
+                return false;
+            }
+        }
+        private Dictionary<string, string> ConvertQueryToDictionary(string query)
+        {
+            if (query.IndexOf('?') == -1)
+            {
+                return [];
+            }
+            else
+            {
+                return query.Substring(query.IndexOf('?') + 1).Split('&').ToDictionary(
+                x => x.Split('=', StringSplitOptions.RemoveEmptyEntries)[0],
+                x => x.Split('=', StringSplitOptions.RemoveEmptyEntries)[1],
+                StringComparer.OrdinalIgnoreCase);
+            }
         }
     }
 }

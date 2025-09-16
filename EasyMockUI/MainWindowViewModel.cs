@@ -774,12 +774,13 @@ namespace EasyMock.UI
                         var result = MessageBox.Show(
                             "You have made changes to the mockup. Do you want to discard the changes?",
                             "Confirmation", MessageBoxButton.YesNo);
-                        if (result == MessageBoxResult.Yes)
+                        if (result == MessageBoxResult.No)
                         {
-                            RemoveMockLookup(node);
-                            RootNodes.Remove(node);
+                            return;
                         }
                     }
+                    RemoveMockLookup(node);
+                    RootNodes.Remove(node);
                 }
                 else if (node.Tag is MockNode mockNode && mockNode != null)
                 {

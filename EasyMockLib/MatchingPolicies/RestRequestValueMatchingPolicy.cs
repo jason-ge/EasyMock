@@ -1,11 +1,5 @@
 ﻿using EasyMockLib.Models;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace EasyMockLib.MatchingPolicies
 {
@@ -18,18 +12,16 @@ namespace EasyMockLib.MatchingPolicies
             List<string> elementsToCompare = null;
 
             if (RestServiceMatchingConfig.ContainsKey(url) &&
-                       RestServiceMatchingConfig[url].ContainsKey(method) &&
-                       RestServiceMatchingConfig[url][method].Count() > 0)
+                       RestServiceMatchingConfig[url].ContainsKey(method))
             {
                 elementsToCompare = RestServiceMatchingConfig[url][method];
             }
-
             else
             {
                 return null;
             }
 
-                JObject jIncomingRequest = JObject.Parse(requestContent);
+            JObject jIncomingRequest = JObject.Parse(requestContent);
             foreach (var mock in mocks)
             {
                 var jMockRequest = JObject.Parse(mock.Request.RequestBody.Content);
@@ -49,7 +41,8 @@ namespace EasyMockLib.MatchingPolicies
                         var element2 = jMockRequest.SelectToken(elementName);
                         if (!JToken.DeepEquals(element1, element2))
                         {
-                            match = false; break;
+                            match = false;
+                            break;
                         }
                     }
                     if (match)

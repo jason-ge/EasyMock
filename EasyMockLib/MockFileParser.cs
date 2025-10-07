@@ -29,10 +29,7 @@ namespace EasyMockLib
 
         public MockFileNode Parse(string filePath)
         {
-            MockFileNode root = new MockFileNode()
-            {
-                MockFile = filePath
-            };
+            MockFileNode root = new MockFileNode(filePath);
             lineNumber = 0;
             List<(string MethodName, string Url, Request Request)> pendingRequests = new List<(string, string, Request)>();
             using (StreamReader reader = new StreamReader(filePath))

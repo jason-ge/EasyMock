@@ -32,10 +32,7 @@ namespace EasyMockLib
 
         public MockFileNode Parse(string filePath)
         {
-            MockFileNode root = new MockFileNode()
-            {
-                MockFile = filePath,
-            };
+            MockFileNode root = new MockFileNode(filePath);
             lineNumber = 0;
             List<MockNode> pendingNodes = new List<MockNode>();
             Console.WriteLine($"Processing file {filePath}");

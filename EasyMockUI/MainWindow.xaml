@@ -4,13 +4,21 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:EasyMock.UI"
         Name="MainWindowUI"
-        Title="Easy Mock v1.0.1" Height="800" Width="1200">
+        Title="Easy Mock v1.1.1" Height="800" Width="1200">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing">
             <i:InvokeCommandAction Command="{Binding WindowCloseCommand}" PassEventArgsToCommand="True" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
-
+    <Window.Style>
+        <Style TargetType="Window">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                    <Setter Property="Cursor" Value="Wait" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
     <Window.Resources>
         <ContextMenu x:Key="TreeViewItemContextMenu" x:Shared="False">
             <MenuItem Header="Add" 
@@ -145,6 +153,10 @@
                     <Setter Property="ContextMenu" Value="{StaticResource TreeViewItemContextMenu}"/>
                     <Setter Property="IsSelected" Value="{Binding IsSelected}"/>
                     <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsNew}" Value="True">
+                            <Setter Property="Foreground" Value="DarkGreen"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding IsDirty}" Value="True">
                             <Setter Property="FontWeight" Value="Bold"/>
                         </DataTrigger>
@@ -204,35 +216,37 @@
                                             </TextBox.Style>
                                         </TextBox>
                                     </Expander.Header>
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Text="Request:" FontWeight="Bold" Margin="0,0,0,2" Grid.Row="0"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Headers:" FontWeight="Bold" Margin="0,0,0,2"/>
+                                        <TextBox Text="{Binding Headers}"
+                                                 IsReadOnly="True"
+                                                 TextWrapping="NoWrap"
+                                                 Background="#F7F7F7"
+                                                 Margin="10,0,0,6"
+                                                 MaxHeight="250"
+                                                 HorizontalAlignment="Stretch"
+                                                 VerticalScrollBarVisibility="Auto"
+                                                 HorizontalScrollBarVisibility="Auto"/>
+                                        <TextBlock Text="Request:" FontWeight="Bold" Margin="0,0,0,2"/>
                                         <TextBox Text="{Binding RequestBody}"
                                                  IsReadOnly="True"
                                                  TextWrapping="NoWrap"
                                                  Background="#F7F7F7"
-                                                 Margin="0,0,0,6"
+                                                 Margin="10,0,0,6"
                                                  MaxHeight="250"
                                                  HorizontalAlignment="Stretch"
                                                  VerticalScrollBarVisibility="Auto"
-                                                 HorizontalScrollBarVisibility="Auto"
-                                                 Grid.Row="1"/>
-                                        <TextBlock Text="Response:" FontWeight="Bold" Margin="0,0,0,2" Grid.Row="2"/>
+                                                 HorizontalScrollBarVisibility="Auto"/>
+                                        <TextBlock Text="Response:" FontWeight="Bold" Margin="0,0,0,2"/>
                                         <TextBox Text="{Binding ResponseBody}"
                                                  IsReadOnly="True"
                                                  TextWrapping="NoWrap"
                                                  Background="#FFFBEA"
+                                                 Margin="10,0,0,6"
                                                  MaxHeight="250"
                                                  HorizontalAlignment="Stretch"
                                                  VerticalScrollBarVisibility="Auto"
-                                                 HorizontalScrollBarVisibility="Auto"
-                                                 Grid.Row="3">
+                                                 HorizontalScrollBarVisibility="Auto">
                                             <i:Interaction.Triggers>
                                                 <i:EventTrigger EventName="MouseEnter">
                                                     <i:InvokeCommandAction Command="{Binding DataContext.ResponseBodyMouseEnterCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -248,7 +262,7 @@
                                                 </i:EventTrigger>
                                             </i:Interaction.Triggers>
                                         </TextBox>
-                                    </Grid>
+                                    </StackPanel>
                                 </Expander>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

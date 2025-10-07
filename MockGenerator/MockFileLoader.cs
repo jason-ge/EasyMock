@@ -9,9 +9,8 @@ namespace MockGenerator
 
         public MockFileNode LoadMockFile(string path)
         {
-            var mockFileNode = new MockFileNode()
+            var mockFileNode = new MockFileNode(path)
             {
-                MockFile = path,
                 Nodes = ParseMockXml(path)
             };
 

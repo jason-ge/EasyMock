@@ -3,11 +3,13 @@ using EasyMockLib.MatchingPolicies;
 using EasyMockLib.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Configuration;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -22,20 +24,20 @@ namespace EasyMock.UI
         private readonly string APP_ROOT_FOLDER = ConfigurationManager.AppSettings["AppRootFolder"];
         private readonly string MOCK_CONFIGURATION_FOLDER = ConfigurationManager.AppSettings["MockConfigurationFolder"];
 
-        private RestRequestValueMatchingPolicy restMatchPolicy = new RestRequestValueMatchingPolicy()
-        {
-            RestServiceMatchingConfig = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<string>>>>(File.ReadAllText("RestServiceMatchingConfig.json"))
-        };
+        private readonly Dictionary<string, Dictionary<string, List<string>>> _restMatchConfig = 
+            JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<string>>>>(File.ReadAllText("RestServiceMatchingConfig.json"));
+        private readonly Dictionary<string, Dictionary<string, List<string>>> _soapMatchConfig = 
+            JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<string>>>>(File.ReadAllText("SoapServiceMatchingConfig.json"));
 
-        private SoapRequestValueMatchingPolicy soapMatchPolicy = new SoapRequestValueMatchingPolicy()
-        {
-            SoapServiceMatchingConfig = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<string>>>>(File.ReadAllText("SoapServiceMatchingConfig.json"))
-        };
         private readonly IDialogService _dialogService;
         private readonly IFileDialogService _fileDialogService;
-        private StringBuilder _logOutput = new StringBuilder();
-        private readonly Dictionary<string, List<MockTreeNode>> MockNodeLookup = [];
-        private MockNode _copiedNode;
+        private readonly StringBuilder _logOutput = new StringBuilder();
+        private readonly MockRepository _mockRepository;
+        private MockNode? _copiedNode;
+        private bool _isServiceRunning;
+
+        private readonly HttpListener listener = new HttpListener { Prefixes = { $"http://localhost:{ConfigurationManager.AppSettings["BindingPort"]}/" } };
+        private CancellationTokenSource? tokenSource;
 
         public ObservableCollection<MockTreeNode> RootNodes { get; }
         public ObservableCollection<RequestResponsePair> RequestResponsePairs { get; } = [];
@@ -59,6 +61,17 @@ namespace EasyMock.UI
         public ICommand? RemoveMockNodeCommand { get; }
         public ICommand? SaveMockNodeCommand { get; }
 
+        private bool _isBusy = false;
+        public bool IsBusy 
+        { 
+            get { return _isBusy; }
+            set
+            {
+                _isBusy = value;
+                OnPropertyChanged(nameof(IsBusy));
+            }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public string LogOutput
@@ -66,42 +79,37 @@ namespace EasyMock.UI
             get => _logOutput.ToString();
         }
 
-        private bool IsServiceRunning { get; set; } = false;
-        private bool IsMockTreeLoaded { get; set; } = false;
-
-        private HttpListener listener = new HttpListener { Prefixes = { $"http://localhost:{ConfigurationManager.AppSettings["BindingPort"]}/" } };
-        private CancellationTokenSource? tokenSource;
-
         public MainWindowViewModel(IFileDialogService fileDialogService, IDialogService dialogService)
         {
+            _mockRepository = new MockRepository(_restMatchConfig, _soapMatchConfig);
+
             List<MockTreeNode> mockTreeNodes = [];
             foreach (var file in Directory.EnumerateFiles(ConfigurationManager.AppSettings["MockFileFolder"], "*.xml"))
             {
-                var mockTreeNode = new MockTreeNode(new MockFileNode()
+                var mockTreeNode = new MockTreeNode(new MockFileNode(file)
                 {
-                    MockFile = file,
                     Nodes = ParseXML(file)
-                });
+                }, NodeTypes.MockFile);
                 mockTreeNodes.Add(mockTreeNode);
             }
             RootNodes = new ObservableCollection<MockTreeNode>(mockTreeNodes);
             SyncMockLookup();
 
-            LoadDevLogCommand = new RelayCommand<object?>(_ => LoadDevLog(), _ => IsMockTreeLoaded);
             ClearLogCommand = new RelayCommand<object?>(_ =>
             {
                 RequestResponsePairs.Clear();
-                _logOutput = new StringBuilder();
+                _logOutput.Clear();
                 OnPropertyChanged(nameof(RequestResponsePairs));
                 OnPropertyChanged(nameof(LogOutput));
             }, _ => RequestResponsePairs.Count > 0);
 
             SaveLogCommand = new RelayCommand<object>(OnSaveLog, _ => RequestResponsePairs.Count > 0);
-            NewMockFileCommand = new RelayCommand<object>(NewMockFile);
 
-            LoadMockFileCommand = new RelayCommand<object>(_ => LoadMockFile(), _ => IsMockTreeLoaded);
-            StartServiceCommand = new RelayCommand<object>(_ => StartWebServer(), _ => !IsServiceRunning && IsMockTreeLoaded);
-            StopServiceCommand = new RelayCommand<object>(_ => StopWebServer(), _ => IsServiceRunning);
+            NewMockFileCommand = new RelayCommand<object>(NewMockFile);
+            LoadDevLogCommand = new RelayCommand<object?>(async => LoadDevLog());
+            LoadMockFileCommand = new RelayCommand<object>(_ => LoadMockFile());
+            StartServiceCommand = new RelayCommand<object>(_ => StartWebServer(), _ => !_isServiceRunning);
+            StopServiceCommand = new RelayCommand<object>(_ => StopWebServer(), _ => _isServiceRunning);
             WindowCloseCommand = new RelayCommand<CancelEventArgs>(OnClosing);
             ResponseBodyMouseEnterCommand = new RelayCommand<RequestResponsePair>(OnResponseBodyMouseEnter);
             ResponseBodyMouseLeaveCommand = new RelayCommand<RequestResponsePair>(OnResponseBodyMouseLeave);
@@ -121,111 +129,7 @@ namespace EasyMock.UI
 
         private void SyncMockLookup()
         {
-            lock (MockNodeLookup)
-            {
-                IsMockTreeLoaded = false;
-                MockNodeLookup.Clear();
-                foreach (var node in RootNodes)
-                {
-                    AppendMockLookup(node);
-                }
-                IsMockTreeLoaded = true;
-            }
-        }
-
-        private void AppendMockLookup(MockTreeNode mockTreeNode)
-        {
-            var mockFileNode = mockTreeNode.Tag as MockFileNode;
-            if (mockFileNode == null)
-            {
-                throw new ArgumentException($"{nameof(mockTreeNode)} is not MockFileNode type");
-            }
-            lock (MockNodeLookup)
-            {
-                foreach (var node in mockTreeNode.Children)
-                {
-                    if (!MockNodeLookup.ContainsKey($"{((MockNode)node.Tag).Url.ToLower()}"))
-                    {
-                        MockNodeLookup.Add(((MockNode)node.Tag).Url.ToLower(), [mockTreeNode]);
-                    }
-                    else
-                    {
-                        MockNodeLookup[((MockNode)node.Tag).Url.ToLower()].Add(mockTreeNode);
-                    }
-                }
-            }
-        }
-
-        private void PrependMockLookup(MockTreeNode mockTreeNode)
-        {
-            var mockFileNode = mockTreeNode.Tag as MockFileNode;
-            if (mockFileNode == null)
-            {
-                throw new ArgumentException($"{nameof(mockTreeNode)} is not MockFileNode type");
-            }
-            lock (MockNodeLookup)
-            {
-                foreach (var node in mockTreeNode.Children)
-                {
-                    var mockNode = (MockNode)node.Tag;
-                    if (!MockNodeLookup.ContainsKey(mockNode.Url.ToLower()))
-                    {
-                        MockNodeLookup.Add(mockNode.Url.ToLower(), [mockTreeNode]);
-                    }
-                    else
-                    {
-                        MockNodeLookup[mockNode.Url.ToLower()].Insert(0, mockTreeNode);
-                    }
-                }
-            }
-        }
-
-        private void UpdateMockLookup(MockTreeNode mockTreeNode, string url)
-        {
-            var mockFileNode = mockTreeNode.Tag as MockFileNode;
-            if (mockFileNode == null)
-            {
-                throw new ArgumentException($"{nameof(mockTreeNode)} is not MockFileNode type");
-            }
-            if (MockNodeLookup.ContainsKey(url.ToLower()))
-            {
-                var list = MockNodeLookup[url.ToLower()];
-                if (list.IndexOf(mockTreeNode) < 0)
-                {
-                    list.Add(mockTreeNode);
-                }
-            }
-            else
-            {
-                MockNodeLookup.Add(url.ToLower(), [mockTreeNode]);
-            }
-        }
-        private void RemoveMockLookup(MockTreeNode mockTreeNode)
-        {
-            var mockFileNode = mockTreeNode.Tag as MockFileNode;
-            if (mockFileNode == null)
-            {
-                throw new ArgumentException($"{nameof(mockTreeNode)} is not MockFileNode type");
-            }
-            foreach (var node in mockTreeNode.Children)
-            {
-                lock (MockNodeLookup)
-                {
-                    var mockNode = (MockNode)node.Tag;
-                    if (MockNodeLookup.ContainsKey(mockNode.Url.ToLower()))
-                    {
-                        var list = MockNodeLookup[mockNode.Url.ToLower()];
-                        if (list.IndexOf(mockTreeNode) >= 0)
-                        {
-                            list.Remove(mockTreeNode);
-                        }
-                        if (list.Count == 0)
-                        {
-                            MockNodeLookup.Remove(mockNode.Url.ToLower());
-                        }
-                    }
-                }
-            }
+            _mockRepository.BuildRepository(RootNodes.Select(n => n.Tag as MockFileNode));
         }
 
         private static void DedentRequestResponse(MockNode mock)
@@ -274,17 +178,29 @@ namespace EasyMock.UI
             }
         }
 
-        private void LoadDevLog()
+        private async void LoadDevLog()
         {
             var filePath = _fileDialogService.OpenFile("Dev Log Files|*.txt;*.log");
             if (string.IsNullOrEmpty(filePath)) return;
 
-            var mockTreeNode = new MockTreeNode(new DevLogParser().Parse(filePath))
+            IsBusy = true;
+            var mockTreeNode = await Task.Run(() =>
             {
-                NodeType = NodeTypes.LogFile
-            };
-            PrependMockLookup(mockTreeNode);
+                var mockTreeNode = new MockTreeNode(new DevLogParser().Parse(filePath), NodeTypes.LogFile);
+                foreach (var node in mockTreeNode.Children)
+                {
+                    var mock = node.Tag as MockNode;
+                    if (!_mockRepository.IsMockExist(mock.Url, mock.MethodName))
+                    {
+                        node.IsNew = true;
+                    }
+                }
+                return mockTreeNode;
+            });
             RootNodes.Insert(0, mockTreeNode);
+            IsBusy = false;
+
+            SyncMockLookup();
         }
 
         private void NewMockFile(object? parameter)
@@ -300,10 +216,7 @@ namespace EasyMock.UI
                     MessageBox.Show("The mock file already exists.");
                     return;
                 }
-                MockTreeNode node = new MockTreeNode(new MockFileNode()
-                {
-                    MockFile = fileName,
-                });
+                MockTreeNode node = new MockTreeNode(new MockFileNode(fileName), NodeTypes.MockFile);
                 node.IsDirty = true;
                 int i = 0;
                 for (; i < RootNodes.Count; i++)
@@ -330,13 +243,12 @@ namespace EasyMock.UI
             var filePath = _fileDialogService.OpenFile("XML Files (*.xml)|*.xml");
             if (string.IsNullOrEmpty(filePath)) return;
 
-            var mockTreeNode = new MockTreeNode(new MockFileNode()
+            var mockTreeNode = new MockTreeNode(new MockFileNode(filePath)
             {
-                MockFile = filePath,
                 Nodes = ParseXML(filePath)
-            });
-            PrependMockLookup(mockTreeNode);
+            }, NodeTypes.MockFile);
             RootNodes.Insert(0, mockTreeNode);
+            SyncMockLookup();
         }
 
         private void StartWebServer()
@@ -354,7 +266,7 @@ namespace EasyMock.UI
             {
                 listener.Start();
                 AppendOutput($"Mock service started.\n");
-                Application.Current.Dispatcher.Invoke(() => IsServiceRunning = true);
+                Application.Current.Dispatcher.Invoke(() => _isServiceRunning = true);
 
                 while (!tokenSource.IsCancellationRequested)
                 {
@@ -381,7 +293,7 @@ namespace EasyMock.UI
         private void StopWebServer()
         {
             AppendOutput($"Mock service stopped.{Environment.NewLine}");
-            Application.Current.Dispatcher.Invoke(() => IsServiceRunning = false);
+            Application.Current.Dispatcher.Invoke(() => _isServiceRunning = false);
             tokenSource?.Cancel();
         }
 
@@ -391,7 +303,7 @@ namespace EasyMock.UI
             if (string.IsNullOrEmpty(logFilePath)) return;
 
             ObservableCollection<MockNode> nodes = new ObservableCollection<MockNode>();
-            var mockFileNode = new MockFileNode() { MockFile = logFilePath, Nodes = new List<MockNode>() };
+            var mockFileNode = new MockFileNode(logFilePath) { Nodes = new List<MockNode>() };
             foreach (RequestResponsePair pair in RequestResponsePairs)
             {
                 MockNode node = new MockNode()
@@ -454,12 +366,12 @@ namespace EasyMock.UI
                     if (mock != null)
                     {
                         SendMockResponse(mock, context, response);
-                        AddRequestResponsePair(mock, context.Request.Url.PathAndQuery, serviceType, method, requestContent, DateTime.Now.Subtract(timestamp).TotalMilliseconds);
+                        AddRequestResponsePair(mock, context, serviceType, method, requestContent, DateTime.Now.Subtract(timestamp).TotalMilliseconds);
                     }
                     else
                     {
                         SendResponseContent("", HttpStatusCode.NotFound, context, response);
-                        AddRequestResponsePair(null, context.Request.Url.PathAndQuery, serviceType, method, requestContent, DateTime.Now.Subtract(timestamp).TotalMilliseconds);
+                        AddRequestResponsePair(null, context, serviceType, method, requestContent, DateTime.Now.Subtract(timestamp).TotalMilliseconds);
                     }
                 }
                 catch (Exception e)
@@ -467,52 +379,34 @@ namespace EasyMock.UI
                     SendResponseContent("", HttpStatusCode.InternalServerError, context, response);
 
                     // Optionally log the exception as a request/response pair
-                    AddRequestResponsePair(null, context.Request.Url.PathAndQuery, serviceType, method, requestContent, DateTime.Now.Subtract(timestamp).TotalMilliseconds, e);
+                    AddRequestResponsePair(null, context, serviceType, method, requestContent, DateTime.Now.Subtract(timestamp).TotalMilliseconds, e);
                 }
             }
         }
 
-        private (MockTreeNode?, string, string) GetMock(HttpListenerContext context)
+        private (MockNode?, string, string) GetMock(HttpListenerContext context)
         {
-            MockTreeNode? mock = null;
+            MockNode? mock = null;
             string requestContent = ReadRequest(context);
             string method = context.Request.HttpMethod.ToString();
+            string urlLower = context.Request.Url.PathAndQuery.ToLower();
             if (context.Request.HttpMethod.Equals("GET", StringComparison.OrdinalIgnoreCase) || context.Request.ContentType.StartsWith("application/json"))
             {
                 // REST request
                 method = context.Request.HttpMethod.ToString();
-                mock = GetMock(ServiceType.REST, context.Request.Url.PathAndQuery, method, requestContent, restMatchPolicy);
+                mock = _mockRepository.GetMock(ServiceType.REST, urlLower, method, requestContent);
             }
             else if (context.Request.ContentType.StartsWith("text/xml"))
             {
                 // SOAP request
                 method = GetSoapAction(requestContent);
-                mock = GetMock(ServiceType.SOAP, context.Request.Url.PathAndQuery, method, requestContent, soapMatchPolicy);
+                mock = _mockRepository.GetMock(ServiceType.SOAP, urlLower, method, requestContent);
             }
             else
             {
                 MessageBox.Show($"Unknown content type {context.Request.ContentType}");
             }
             return (mock, method, requestContent);
-        }
-        private MockTreeNode?  GetMock(ServiceType serviceType, string url, string method, string requestContent, IMatchingPolicy matchingPolicy)
-        {
-            var urlLower = url.ToLower();
-            lock (MockNodeLookup)
-            {
-                if (MockNodeLookup.ContainsKey(urlLower))
-                {
-                    foreach (var node in MockNodeLookup[urlLower])
-                    {
-                        MockNode? mock = ((MockFileNode)node.Tag).GetMock(serviceType, url, method, requestContent, matchingPolicy);
-                        if (mock != null)
-                        {
-                            return node.Children.FirstOrDefault(c => c.Tag == mock);
-                        }
-                    }
-                }
-            }
-            return null;
         }
 
         private string ReadRequest(HttpListenerContext context)
@@ -543,19 +437,18 @@ namespace EasyMock.UI
             {
                 response.Headers.Add(correlationId, context.Request.Headers[correlationId]);
             }
-            System.IO.Stream output = response.OutputStream;
+            Stream output = response.OutputStream;
             output.Write(buffer, 0, buffer.Length);
             output.Flush();
         }
 
-        private void SendMockResponse(MockTreeNode node, HttpListenerContext context, HttpListenerResponse response)
+        private void SendMockResponse(MockNode mock, HttpListenerContext context, HttpListenerResponse response)
         {
-            var mock = node.Tag as MockNode;
-            if (mock != null)
+            if (mock != null && mock.Response != null)
             {
-                if (mock.Response.Delay != 0)
+                if (mock.Response.Delay > 0)
                 {
-                    AppendOutput("Sleeping for " + mock.Response.Delay + " seconds...");
+                    AppendOutput("Sleeping for " + mock.Response?.Delay + " seconds...");
                     Thread.Sleep(mock.Response.Delay * 1000);
                 }
                  SendResponseContent(mock.Response.ResponseBody.Content, mock.Response.StatusCode, context, response);
@@ -592,8 +485,7 @@ namespace EasyMock.UI
             if (mockFileNode != null)
             {
                 var serializer = new XmlSerializer(typeof(List<MockNode>));
-                mockFileNode.MockFile = mockFileNode.MockFile.Replace(".txt", ".xml");
-                using (var writer = new StreamWriter(mockFileNode.MockFile))
+                using (var writer = new StreamWriter(mockFileNode.MockFile.Replace(".txt", ".xml")))
                 {
                     serializer.Serialize(writer, mockFileNode.Nodes);
                 }
@@ -613,21 +505,21 @@ namespace EasyMock.UI
                     var newMockNode = new MockNode()
                     {
                         ServiceType = viewModel.ServiceType,
-                        MethodName = viewModel.MethodName,
-                        Url = viewModel.Url,
+                        MethodName = viewModel.MethodName.Trim(),
+                        Url = viewModel.Url.Trim(),
                         Description = viewModel.Description,
                         Request = new Request
                         {
                             RequestBody = new Body
                             {
-                                Content = viewModel.RequestBody
+                                Content = viewModel.RequestBody.Trim()
                             }
                         },
                         Response = new Response
                         {
                             ResponseBody = new Body
                             {
-                                Content = viewModel.ResponseBody
+                                Content = viewModel.ResponseBody.Trim()
                             },
                             StatusCode = (HttpStatusCode)viewModel.SelectedStatusCodeOption.Code,
                             Delay = int.TryParse(viewModel.ResponseDelay, out int delay) ? delay : 0
@@ -675,7 +567,7 @@ namespace EasyMock.UI
                 mockFileNode.Nodes.Add(mockNode);
                 node.Children.Add(new MockTreeNode(mockNode) { Parent = node });
                 node.IsDirty = true;
-                UpdateMockLookup(node, mockNode.Url);
+                SyncMockLookup();
                 _copiedNode = null!;
             }
         }
@@ -699,18 +591,18 @@ namespace EasyMock.UI
                     .FirstOrDefault(o => o.Code == (int)mockNode.Response.StatusCode);
 
                 var mockNodeEditor = new MockNodeEditorWindow() { DataContext = viewModel, Owner = Application.Current.MainWindow };
-
                 if (mockNodeEditor.ShowDialog() == true)
                 {
+                    bool urlChanged = !mockNode.Url.Equals(viewModel.Url, StringComparison.OrdinalIgnoreCase);
                     mockNode.ServiceType = viewModel.ServiceType;
                     if (!mockNode.MethodName.Equals(viewModel.MethodName, StringComparison.OrdinalIgnoreCase))
                     {
-                        mockNode.MethodName = viewModel.MethodName;
+                        mockNode.MethodName = viewModel.MethodName.Trim();
                         node.OnMockNodePropertyChanged(this, new PropertyChangedEventArgs(nameof(MockNode.MethodName)));
                     }
-                    if (!mockNode.Url.Equals(viewModel.Url, StringComparison.OrdinalIgnoreCase))
+                    if (urlChanged)
                     {
-                        mockNode.Url = viewModel.Url;
+                        mockNode.Url = viewModel.Url.Trim();
                         node.OnMockNodePropertyChanged(this, new PropertyChangedEventArgs(nameof(MockNode.Url)));
                     }
 
@@ -734,7 +626,10 @@ namespace EasyMock.UI
                     if (node.Parent is MockTreeNode mockFileNode)
                     {
                         mockFileNode.IsDirty = true;
-                        UpdateMockLookup(mockFileNode, mockNode.Url);
+                    }
+                    if (urlChanged)
+                    {
+                        SyncMockLookup();
                     }
                 }
             }
@@ -753,12 +648,11 @@ namespace EasyMock.UI
                 var index = RootNodes.IndexOf(node);
                 if (index < 0) return;
 
-                var newMockFileNode = new MockFileNode()
+                var newMockFileNode = new MockFileNode(mockFileNode.MockFile)
                 {
-                    MockFile = mockFileNode.MockFile,
                     Nodes = ParseXML(mockFileNode.MockFile)
                 };
-                RootNodes[index] = new MockTreeNode(newMockFileNode);
+                RootNodes[index] = new MockTreeNode(newMockFileNode, NodeTypes.MockFile);
                 SyncMockLookup();
             }
         }
@@ -779,8 +673,8 @@ namespace EasyMock.UI
                             return;
                         }
                     }
-                    RemoveMockLookup(node);
                     RootNodes.Remove(node);
+                    SyncMockLookup();
                 }
                 else if (node.Tag is MockNode mockNode && mockNode != null)
                 {
@@ -814,27 +708,27 @@ namespace EasyMock.UI
 
         public void AppendOutput(string message)
         {
-            _logOutput.Append(message + Environment.NewLine);
+            _logOutput.Append(message);
             OnPropertyChanged(nameof(LogOutput));
         }
 
-        public void AddRequestResponsePair(MockTreeNode? node, string url, ServiceType serviceType, string method, string requestContent, double responseTime, Exception? ex = null)
+        public void AddRequestResponsePair(MockNode? node, HttpListenerContext context, ServiceType serviceType, string method, string requestContent, double responseTime, Exception? ex = null)
         {
-            var mock = node?.Tag as MockNode;
             string requestBody = requestContent;
-            string responseBody = mock?.Response.ResponseBody?.Content ?? string.Empty;
+            string responseBody = node?.Response?.ResponseBody?.Content ?? string.Empty;
 
             var pair = new RequestResponsePair
             {
                 Method = method,
-                Url = url,
+                Url = context.Request.Url.PathAndQuery,
                 ServiceType = serviceType,
                 ResponseTimeInMs = (long)responseTime,
+                Headers = string.Join(Environment.NewLine, context.Request.Headers.AllKeys.Select(k => $"{k}: {string.Join(",", context.Request.Headers.GetValues(k) ?? [])}")),
                 RequestBody = requestContent,
-                ResponseBody = mock?.Response?.ResponseBody?.Content ?? string.Empty,
+                ResponseBody = responseBody,
                 MockNodeSource = node
             };
-            if (mock == null || mock.Response == null)
+            if (node == null || node.Response == null)
             {
                 if (ex == null)
                 {
@@ -848,7 +742,7 @@ namespace EasyMock.UI
             }
             else
             {
-                pair.StatusCode = mock.Response.StatusCode;
+                pair.StatusCode = node.Response.StatusCode;
             }
             Application.Current.Dispatcher.Invoke(() =>
                 {
@@ -943,22 +837,35 @@ namespace EasyMock.UI
 
         private void OnResponseBodyMouseEnter(RequestResponsePair? pair)
         {
-            var node = pair?.MockNodeSource as MockTreeNode;
-            if (node != null)
+            if (pair == null) return;
+            pair.MockTreeNodeSource = FindTreeNode(pair?.MockNodeSource);
+            if (pair.MockTreeNodeSource != null)
             {
-                node.IsHovered = true;
-                node.UpdateAncestorStates();
+                pair.MockTreeNodeSource.IsHovered = true;
+                pair.MockTreeNodeSource.UpdateAncestorStates();
             }
         }
 
         private void OnResponseBodyMouseLeave(RequestResponsePair? pair)
         {
-            var node = pair?.MockNodeSource as MockTreeNode;
-            if (node != null)
+            if (pair == null || pair.MockTreeNodeSource == null) return;
+
+            pair.MockTreeNodeSource.IsHovered = false;
+            pair.MockTreeNodeSource.UpdateAncestorStates();
+        }
+
+        private MockTreeNode? FindTreeNode(MockNode? node)
+        {
+            if (node == null) return null;
+            foreach (var root in RootNodes)
             {
-                node.IsHovered = false;
-                node.UpdateAncestorStates();
+                foreach(var child in root.Children)
+                {
+                    if (child.Tag == node)
+                        return child;
+                }
             }
+            return null;
         }
 
         private string FormatRequestContent(string content)

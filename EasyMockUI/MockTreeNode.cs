@@ -34,9 +34,9 @@ namespace EasyMock.UI
             }
         }
 
-        public MockTreeNode(MockFileNode fileNode)
+        public MockTreeNode(MockFileNode fileNode, NodeTypes nodeType)
         {
-            NodeType = NodeTypes.MockFile;
+            NodeType = nodeType;
             Tag = fileNode;
 
             foreach (MockNode node in fileNode.Nodes)
@@ -76,6 +76,20 @@ namespace EasyMock.UI
             }
         }
 
+        private bool _isNew;
+        public bool IsNew
+        {
+            get => _isNew;
+            set
+            {
+                if (_isNew != value)
+                {
+                    _isNew = value;
+                    OnPropertyChanged(nameof(IsNew));
+                }
+            }
+        }
+
         private bool _isSelected;
         public bool IsSelected
         {
@@ -112,7 +126,9 @@ namespace EasyMock.UI
             get
             {
                 if (Tag is MockNode mockNode && mockNode.Response != null)
-                    return mockNode.Response.StatusCode != HttpStatusCode.OK;
+                    return mockNode.Response.StatusCode != HttpStatusCode.OK &&
+                        mockNode.Response.StatusCode != HttpStatusCode.Created &&
+                        mockNode.Response.StatusCode != HttpStatusCode.NoContent;
                 else return false;
             }
         }

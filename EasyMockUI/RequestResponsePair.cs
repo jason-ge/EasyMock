@@ -1,5 +1,6 @@
 using EasyMockLib.Models;
 using System.Net;
+using System.Text;
 
 namespace EasyMock.UI;
 
@@ -27,6 +28,8 @@ public class RequestResponsePair
     public ServiceType ServiceType { get; set; }
     public string? RequestBody { get; set; }
     public string? ResponseBody { get; set; }
-    public MockTreeNode? MockNodeSource { get; set; }
+    public string? Headers { get; set; }
+    public MockNode? MockNodeSource { get; set; }
+    public MockTreeNode? MockTreeNodeSource { get; set; }
     public HttpStatusCode StatusCode { get; set; }
 }

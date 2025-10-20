@@ -4,3 +4,4 @@ v1.1.0 - Added following new features:
 		  - Added feature to highlight (darkgreen and bold) the new mock requests/responses in loaded dev log file.
 		  - Other small improvements and bug fixes.
 v1.1.1 - Added http request headers display function.
+v1.1.2 - Added error handling when adding/editing the mock node; highlight the added/edited mock node in treeview.

@@ -101,7 +101,7 @@ namespace EasyMock.UI
                 _logOutput.Clear();
                 OnPropertyChanged(nameof(RequestResponsePairs));
                 OnPropertyChanged(nameof(LogOutput));
-            }, _ => RequestResponsePairs.Count > 0);
+            }, _ => RequestResponsePairs.Count > 0 || _logOutput.Length > 0);
 
             SaveLogCommand = new RelayCommand<object>(OnSaveLog, _ => RequestResponsePairs.Count > 0);
 
@@ -491,6 +491,10 @@ namespace EasyMock.UI
                 }
                 MessageBox.Show($"Mocks saved to {mockFileNode.MockFile}.", "Saved", MessageBoxButton.OK);
             }
+            foreach(var child in node.Children)
+            {
+                child.IsDirty = true;
+            }
             node.IsDirty = false;
         }
 
@@ -501,6 +505,8 @@ namespace EasyMock.UI
                 var editor = new MockNodeEditorWindow();
                 if (editor.ShowDialog() == true)
                 {
+                    try
+                    {
                     var viewModel = editor.DataContext as MockNodeEditorViewModel;
                     var newMockNode = new MockNode()
                     {
@@ -512,14 +518,14 @@ namespace EasyMock.UI
                         {
                             RequestBody = new Body
                             {
-                                Content = viewModel.RequestBody.Trim()
+                                Content = viewModel.RequestBody == null ? string.Empty : viewModel.RequestBody.Trim()
                             }
                         },
                         Response = new Response
                         {
                             ResponseBody = new Body
                             {
-                                Content = viewModel.ResponseBody.Trim()
+                                Content = viewModel.ResponseBody == null ? string.Empty : viewModel.ResponseBody.Trim()
                             },
                             StatusCode = (HttpStatusCode)viewModel.SelectedStatusCodeOption.Code,
                             Delay = int.TryParse(viewModel.ResponseDelay, out int delay) ? delay : 0
@@ -528,6 +534,11 @@ namespace EasyMock.UI
                     mockFileNode.Nodes.Add(newMockNode);
                     node.Children.Add(new MockTreeNode(newMockNode) { Parent = node });
                     node.IsDirty = true;
+                    }
+                    catch(Exception ex)
+                    {
+                        MessageBox.Show($"Failed to add mock node: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
             }
         }
@@ -565,7 +576,7 @@ namespace EasyMock.UI
                 }
 
                 mockFileNode.Nodes.Add(mockNode);
-                node.Children.Add(new MockTreeNode(mockNode) { Parent = node });
+                node.Children.Add(new MockTreeNode(mockNode) { Parent = node, IsDirty = true });
                 node.IsDirty = true;
                 SyncMockLookup();
                 _copiedNode = null!;
@@ -593,47 +604,57 @@ namespace EasyMock.UI
                 var mockNodeEditor = new MockNodeEditorWindow() { DataContext = viewModel, Owner = Application.Current.MainWindow };
                 if (mockNodeEditor.ShowDialog() == true)
                 {
-                    bool urlChanged = !mockNode.Url.Equals(viewModel.Url, StringComparison.OrdinalIgnoreCase);
-                    mockNode.ServiceType = viewModel.ServiceType;
-                    if (!mockNode.MethodName.Equals(viewModel.MethodName, StringComparison.OrdinalIgnoreCase))
+                    try
                     {
-                        mockNode.MethodName = viewModel.MethodName.Trim();
-                        node.OnMockNodePropertyChanged(this, new PropertyChangedEventArgs(nameof(MockNode.MethodName)));
-                    }
-                    if (urlChanged)
-                    {
-                        mockNode.Url = viewModel.Url.Trim();
-                        node.OnMockNodePropertyChanged(this, new PropertyChangedEventArgs(nameof(MockNode.Url)));
-                    }
+                        bool urlChanged = !mockNode.Url.Equals(viewModel.Url, StringComparison.OrdinalIgnoreCase);
+                        mockNode.ServiceType = viewModel.ServiceType;
+                        if (!mockNode.MethodName.Equals(viewModel.MethodName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            mockNode.MethodName = viewModel.MethodName.Trim();
+                            node.OnMockNodePropertyChanged(this, new PropertyChangedEventArgs(nameof(MockNode.MethodName)));
+                        }
+                        if (urlChanged)
+                        {
+                            mockNode.Url = viewModel.Url.Trim();
+                            node.OnMockNodePropertyChanged(this, new PropertyChangedEventArgs(nameof(MockNode.Url)));
+                        }
 
-                    if (mockNode.ServiceType == ServiceType.REST && mockNode.MethodName == "GET")
-                    {
-                        mockNode.Request = null; // GET requests typically don't have a body
-                    }
-                    else
-                    {
-                        if (mockNode.Request == null) mockNode.Request = new Request();
-                        mockNode.Request.RequestBody.Content = viewModel.RequestBody;
-                    }
-                    mockNode.Response.ResponseBody.Content = viewModel.ResponseBody;
-                    mockNode.Response.Delay = int.TryParse(viewModel.ResponseDelay, out int delay) ? delay : 0;
-                    if ((int)mockNode.Response.StatusCode != viewModel.SelectedStatusCodeOption?.Code){
-                        mockNode.Response.StatusCode = (HttpStatusCode)viewModel.SelectedStatusCodeOption.Code;
-                        node.OnMockNodePropertyChanged(this, new PropertyChangedEventArgs(nameof(Response.StatusCode)));
-                    }
-                    mockNode.Description = viewModel.Description;
+                        if (mockNode.ServiceType == ServiceType.REST && mockNode.MethodName == "GET")
+                        {
+                            mockNode.Request = null; // GET requests typically don't have a body
+                        }
+                        else
+                        {
+                            if (mockNode.Request == null) mockNode.Request = new Request();
+                            mockNode.Request.RequestBody.Content = viewModel.RequestBody == null ? string.Empty : viewModel.RequestBody.Trim();
+                        }
+                        mockNode.Response.ResponseBody.Content = viewModel.ResponseBody == null ? string.Empty : viewModel.ResponseBody.Trim();
+                        mockNode.Response.Delay = int.TryParse(viewModel.ResponseDelay, out int delay) ? delay : 0;
+                        if ((int)mockNode.Response.StatusCode != viewModel.SelectedStatusCodeOption?.Code)
+                        {
+                            mockNode.Response.StatusCode = (HttpStatusCode)viewModel.SelectedStatusCodeOption.Code;
+                            node.OnMockNodePropertyChanged(this, new PropertyChangedEventArgs(nameof(Response.StatusCode)));
+                        }
+                        mockNode.Description = viewModel.Description;
+                        node.IsDirty = true;
 
-                    if (node.Parent is MockTreeNode mockFileNode)
-                    {
-                        mockFileNode.IsDirty = true;
+                        if (node.Parent is MockTreeNode mockFileNode)
+                        {
+                            mockFileNode.IsDirty = true;
+                        }
+                        if (urlChanged)
+                        {
+                            SyncMockLookup();
+                        }
                     }
-                    if (urlChanged)
+                    catch (Exception ex)
                     {
-                        SyncMockLookup();
+                        MessageBox.Show($"Failed to update mock node: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
         }
+
         private void OnRefreshMockNodeAction(MockTreeNode? node)
         {
             if (node != null && node.Tag is MockFileNode mockFileNode && mockFileNode != null)

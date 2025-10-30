@@ -22,12 +22,12 @@ namespace EasyMock.UI
         public NewMockFileViewModel()
         {
             MockFileName = "";
-            OkCommand = new RelayCommand<object>(OnOk);
+            OkCommand = new RelayCommand<Window>(OnOk);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        private void OnOk(object? windowObj)
+        private void OnOk(Window? window)
         {
             if (string.IsNullOrWhiteSpace(MockFileName))
             {
@@ -43,7 +43,7 @@ namespace EasyMock.UI
                 MessageBox.Show("Mock file name must have .xml extension.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (windowObj is Window window)
+            if (window != null)
             {
                 window.DialogResult = true;
                 window.Close();

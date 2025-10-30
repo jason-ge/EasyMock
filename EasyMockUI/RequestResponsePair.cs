@@ -1,6 +1,6 @@
 using EasyMockLib.Models;
+using System.Collections.Specialized;
 using System.Net;
-using System.Text;
 
 namespace EasyMock.UI;
 
@@ -23,13 +23,26 @@ public class RequestResponsePair
             return (int)StatusCode < 200 || (int)StatusCode >= 300;
         }
     }
+    public string HeaderString
+    {
+        get
+        {
+            if (Headers == null || Headers.Count == 0)
+            {
+                return string.Empty;
+            }
+            return string.Join(Environment.NewLine, Headers.AllKeys.Select(k => $"{k}: {string.Join(",", Headers.GetValues(k) ?? [])}"));
+        }
+    }
     public string Url { get; set; }
     public string Method { get; set; }
     public ServiceType ServiceType { get; set; }
     public string? RequestBody { get; set; }
     public string? ResponseBody { get; set; }
-    public string? Headers { get; set; }
+    public NameValueCollection Headers { get; set; }
     public MockNode? MockNodeSource { get; set; }
     public MockTreeNode? MockTreeNodeSource { get; set; }
     public HttpStatusCode StatusCode { get; set; }
+
+    public bool CanReplayInQA { get; set; }
 }

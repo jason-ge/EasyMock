@@ -1,16 +1,17 @@
-﻿<Window x:Class="EasyMock.UI.MainWindow"
+﻿<mah:MetroWindow x:Class="EasyMock.UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:EasyMock.UI"
+        xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+        xmlns:local="clr-namespace:EasyMock.UI" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         Name="MainWindowUI"
-        Title="Easy Mock v1.1.2" Height="800" Width="1200">
+        Title="Easy Mock v1.2.0" Height="800" Width="1200">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing">
             <i:InvokeCommandAction Command="{Binding WindowCloseCommand}" PassEventArgsToCommand="True" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
-    <Window.Style>
+    <mah:MetroWindow.Style>
         <Style TargetType="Window">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsBusy}" Value="True">
@@ -18,8 +19,8 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
-    </Window.Style>
-    <Window.Resources>
+    </mah:MetroWindow.Style>
+    <mah:MetroWindow.Resources>
         <ContextMenu x:Key="TreeViewItemContextMenu" x:Shared="False">
             <MenuItem Header="Add" 
                       Command="{Binding DataContext.AddMockNodeCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
@@ -49,44 +50,11 @@
                       Visibility="{Binding DataContext.SaveMenuItemVisibility, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
                       CommandParameter="{Binding}"/>
         </ContextMenu>
-        <Style x:Key="ModernMenuButton" TargetType="Button">
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                        Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="1">
-                            <Border Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
-                            </Border>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#91CAF5"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#3399FF"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#91CAF5"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#3399FF"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Foreground" Value="#AAA"/>
-                                <Setter TargetName="border" Property="Background" Value="#F7F7F7"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#EEE"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-   </Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </mah:MetroWindow.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="30"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -95,94 +63,95 @@
             <ColumnDefinition Width="7*"/>
         </Grid.ColumnDefinitions>
         <ToolBar Grid.Row="0" Grid.Column="0">
-            <Button Command="{Binding NewMockFileCommand}" Content="New Mock File" Style="{StaticResource ModernMenuButton}" />
+            <Button Command="{Binding NewMockFileCommand}" Content="New Mock File" Padding="2" />
             <Separator />
-            <Button Command="{Binding LoadMockFileCommand}" Content="Load Mock File" Style="{StaticResource ModernMenuButton}" />
+            <Button Command="{Binding LoadMockFileCommand}" Content="Load Mock File" Padding="2" />
             <Separator />
-            <Button Command="{Binding LoadDevLogCommand}" Content="Load Log File" Style="{StaticResource ModernMenuButton}" />
+            <Button Command="{Binding LoadDevLogCommand}" Content="Load Log File" Padding="2" />
         </ToolBar>
         <!-- Custom Menu Bar using StackPanel and Buttons -->
         <ToolBar Grid.Row="0" Grid.Column="2" VerticalAlignment="Stretch">
-            <Button Content="Start Service" Style="{StaticResource ModernMenuButton}" Command="{Binding StartServiceCommand}"/>
+            <Button Content="Start Service" Command="{Binding StartServiceCommand}" Padding="2"/>
             <Separator />
-            <Button Content="Stop Service" Style="{StaticResource ModernMenuButton}" Command="{Binding StopServiceCommand}"/>
+            <Button Content="Stop Service" Command="{Binding StopServiceCommand}" Padding="2"/>
             <Separator />
-            <Button Content="Clear Log" Style="{StaticResource ModernMenuButton}" Command="{Binding ClearLogCommand}"/>
+            <Button Content="Clear Log" Command="{Binding ClearLogCommand}" Padding="2"/>
             <Separator />
-            <Button Content="Save Log" Style="{StaticResource ModernMenuButton}" Command="{Binding SaveLogCommand}"/>
+            <Button Content="Save Log" Command="{Binding SaveLogCommand}" Padding="2"/>
         </ToolBar>
 
-        <!-- TreeView Sidebar -->
-        <TreeView Grid.Row="1" Grid.Column="0" x:Name="treeView" ItemsSource="{Binding RootNodes}">
-            <i:Interaction.Triggers>
-                <i:EventTrigger EventName="MouseDoubleClick">
-                    <i:InvokeCommandAction Command="{Binding TreeNodeDoubleClickCommand}" 
+        <Border Grid.Row="1" Grid.Column="0" Margin="2" BorderBrush="#CCC" BorderThickness="1" CornerRadius="4">
+            <!-- TreeView Sidebar -->
+            <TreeView x:Name="treeView" ItemsSource="{Binding RootNodes}">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="MouseDoubleClick">
+                        <i:InvokeCommandAction Command="{Binding TreeNodeDoubleClickCommand}" 
                                            CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=TreeView}}" />
-                </i:EventTrigger>
-            </i:Interaction.Triggers>
-            <TreeView.Resources>
-                <HierarchicalDataTemplate DataType="{x:Type local:MockTreeNode}" ItemsSource="{Binding Children}">
-                    <TextBlock Text="{Binding Header}">
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+                <TreeView.Resources>
+                    <HierarchicalDataTemplate DataType="{x:Type local:MockTreeNode}" ItemsSource="{Binding Children}">
+                        <TextBlock Text="{Binding Header}">
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="PreviewMouseRightButtonDown">
                                 <i:InvokeCommandAction Command="{Binding DataContext.TreeNodeRightClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
                                CommandParameter="{Binding}" />
                             </i:EventTrigger>
                         </i:Interaction.Triggers>
-                    </TextBlock>
-                    <HierarchicalDataTemplate.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Header}" FontStyle="Italic">
+                        </TextBlock>
+                        <HierarchicalDataTemplate.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Header}" FontStyle="Italic">
                                 <i:Interaction.Triggers>
                                     <i:EventTrigger EventName="PreviewMouseRightButtonDown">
                                         <i:InvokeCommandAction Command="{Binding DataContext.TreeNodeRightClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
                                        CommandParameter="{Binding}" />
                                     </i:EventTrigger>
                                 </i:Interaction.Triggers>
-                            </TextBlock>
-                        </DataTemplate>
-                    </HierarchicalDataTemplate.ItemTemplate>
-                </HierarchicalDataTemplate>
-            </TreeView.Resources>
+                                </TextBlock>
+                            </DataTemplate>
+                        </HierarchicalDataTemplate.ItemTemplate>
+                    </HierarchicalDataTemplate>
+                </TreeView.Resources>
 
-            <TreeView.ItemContainerStyle>
-                <Style TargetType="TreeViewItem">
-                    <Setter Property="local:TreeViewItemHoveredBehavior.IsHovered" Value="{Binding IsHovered }" />
-                    <Setter Property="local:TreeViewItemSelectedBehavior.IsSelected" Value="{Binding IsSelected, Mode=OneWay }" />
-                    <Setter Property="FontWeight" Value="Normal"/>
-                    <Setter Property="ContextMenu" Value="{StaticResource TreeViewItemContextMenu}"/>
-                    <Setter Property="IsSelected" Value="{Binding IsSelected}"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsNew}" Value="True">
-                            <Setter Property="Foreground" Value="DarkGreen"/>
-                            <Setter Property="FontWeight" Value="Bold"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding IsDirty}" Value="True">
-                            <Setter Property="FontWeight" Value="Bold"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding IsErrorStatusCode}" Value="True">
-                            <Setter Property="Foreground" Value="Red"/>
-                            <Setter Property="FontWeight" Value="Bold"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding IsHovered}" Value="True">
-                            <Setter Property="FontWeight" Value="Bold"/>
-                            <Setter Property="Background" Value="Yellow"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TreeView.ItemContainerStyle>
-        </TreeView>
-
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="local:TreeViewItemHoveredBehavior.IsHovered" Value="{Binding IsHovered }" />
+                        <Setter Property="local:TreeViewItemSelectedBehavior.IsSelected" Value="{Binding IsSelected, Mode=OneWay }" />
+                        <Setter Property="FontWeight" Value="Normal"/>
+                        <Setter Property="ContextMenu" Value="{StaticResource TreeViewItemContextMenu}"/>
+                        <Setter Property="IsSelected" Value="{Binding IsSelected}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsNew}" Value="True">
+                                <Setter Property="Foreground" Value="DarkGreen"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsDirty}" Value="True">
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsErrorStatusCode}" Value="True">
+                                <Setter Property="Foreground" Value="Red"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsHovered}" Value="True">
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Background" Value="Yellow"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TreeView.ItemContainerStyle>
+            </TreeView>
+        </Border>
         <GridSplitter Grid.Row="0" 
                       Grid.Column="1"
                       Grid.RowSpan="2"
-                      Width="5"
+                      Width="2"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Stretch"
                       ShowsPreview="True" />
 
         <!-- Main Content Area -->
-        <Border Grid.Row="1" Grid.Column="2" Margin="0,0,10,0" BorderBrush="#CCC" BorderThickness="1" CornerRadius="4" Background="White" >
+        <Border Grid.Row="1" Grid.Column="2" Margin="2" BorderBrush="#CCC" BorderThickness="1" CornerRadius="4">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="8*" />
@@ -218,10 +187,9 @@
                                     </Expander.Header>
                                     <StackPanel>
                                         <TextBlock Text="Headers:" FontWeight="Bold" Margin="0,0,0,2"/>
-                                        <TextBox Text="{Binding Headers}"
+                                        <TextBox Text="{Binding HeaderString, Mode=OneWay}"
                                                  IsReadOnly="True"
                                                  TextWrapping="NoWrap"
-                                                 Background="#F7F7F7"
                                                  Margin="10,0,0,6"
                                                  MaxHeight="250"
                                                  HorizontalAlignment="Stretch"
@@ -231,7 +199,6 @@
                                         <TextBox Text="{Binding RequestBody}"
                                                  IsReadOnly="True"
                                                  TextWrapping="NoWrap"
-                                                 Background="#F7F7F7"
                                                  Margin="10,0,0,6"
                                                  MaxHeight="250"
                                                  HorizontalAlignment="Stretch"
@@ -241,7 +208,6 @@
                                         <TextBox Text="{Binding ResponseBody}"
                                                  IsReadOnly="True"
                                                  TextWrapping="NoWrap"
-                                                 Background="#FFFBEA"
                                                  Margin="10,0,0,6"
                                                  MaxHeight="250"
                                                  HorizontalAlignment="Stretch"
@@ -257,11 +223,18 @@
                                                                            CommandParameter="{Binding}" />
                                                 </i:EventTrigger>
                                                 <i:EventTrigger EventName="MouseDoubleClick">
-                                                    <i:InvokeCommandAction Command="{Binding DataContext.TreeNodeDoubleClickCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                           CommandParameter="{Binding MockNodeSource}" />
+                                                    <i:InvokeCommandAction Command="{Binding DataContext.ResponseBodyDoubleClickCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                           CommandParameter="{Binding}" />
                                                 </i:EventTrigger>
                                             </i:Interaction.Triggers>
                                         </TextBox>
+                                        <Button Content="Replay in QA"
+                                                Width="100"
+                                                Margin="0,0,0,10"
+                                                HorizontalAlignment="Left"
+                                                Visibility="{Binding CanReplayInQA, Converter={StaticResource BoolToVis}}"
+                                                Command="{Binding DataContext.ReplayInQACommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"/>
                                     </StackPanel>
                                 </Expander>
                             </DataTemplate>
@@ -279,10 +252,8 @@
                          TextWrapping="Wrap"
                          VerticalScrollBarVisibility="Auto"
                          HorizontalScrollBarVisibility="Auto"
-                         Background="#F7F7F7"
-                         FontFamily="Consolas"
                          BorderBrush="#CCC"/>
             </Grid>
         </Border>
     </Grid>
-</Window>
+</mah:MetroWindow>

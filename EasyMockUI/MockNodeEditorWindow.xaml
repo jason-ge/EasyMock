@@ -1,10 +1,10 @@
-﻿<Window x:Class="EasyMock.UI.MockNodeEditorWindow"
+﻿<mah:MetroWindow x:Class="EasyMock.UI.MockNodeEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:EasyMock.UI"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions"
-        x:Name="window"
+        xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
         Title="MockNode Editor" 
         SizeToContent="WidthAndHeight"
         MinWidth="400"
@@ -54,4 +54,4 @@
             <Button Content="Cancel" Width="80" IsCancel="True"/>
         </StackPanel>
     </Grid>
-</Window>
+</mah:MetroWindow>

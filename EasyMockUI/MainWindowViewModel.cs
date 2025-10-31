@@ -36,7 +36,6 @@ namespace EasyMock.UI
         private readonly MockRepository _mockRepository;
         private readonly List<string> _startupErrors = [];
         private MockNode? _copiedNode;
-        private bool _isServiceRunning;
 
         private readonly HttpListener _listener;
         private CancellationTokenSource? tokenSource;
@@ -65,6 +64,17 @@ namespace EasyMock.UI
         public ICommand? RemoveMockNodeCommand { get; }
         public ICommand? SaveMockNodeCommand { get; }
 
+        private bool _isServiceRunning;
+        public bool IsServiceRunning
+        {
+            get { return _isServiceRunning; }
+            set
+            {
+                _isServiceRunning = value;
+                OnPropertyChanged(nameof(IsServiceRunning));
+            }
+        }
+
         private bool _isBusy = false;
         public bool IsBusy 
         { 
@@ -83,9 +93,9 @@ namespace EasyMock.UI
             get => _logOutput.ToString();
         }
 
-        public MainWindowViewModel(IFileDialogService fileDialogService, IWindowService dialogService)
+        public MainWindowViewModel(IFileDialogService fileDialogService, IWindowService windowService)
         {
-            _windowService = dialogService;
+            _windowService = windowService;
             _fileDialogService = fileDialogService;
 
             _appRootFolder = AssignAppRoot();
@@ -129,8 +139,8 @@ namespace EasyMock.UI
             NewMockFileCommand = new RelayCommand<object>(NewMockFile);
             LoadDevLogCommand = new RelayCommand<object?>(async => LoadDevLog());
             LoadMockFileCommand = new RelayCommand<object>(_ => LoadMockFile());
-            StartServiceCommand = new RelayCommand<object>(_ => StartWebServer(), _ => !_isServiceRunning);
-            StopServiceCommand = new RelayCommand<object>(_ => StopWebServer(), _ => _isServiceRunning);
+            StartServiceCommand = new RelayCommand<object>(_ => StartWebServer(), _ => !IsServiceRunning);
+            StopServiceCommand = new RelayCommand<object>(_ => StopWebServer(), _ => IsServiceRunning);
             WindowCloseCommand = new RelayCommand<CancelEventArgs>(OnClosing);
             ResponseBodyMouseEnterCommand = new RelayCommand<RequestResponsePair>(OnResponseBodyMouseEnter);
             ResponseBodyMouseLeaveCommand = new RelayCommand<RequestResponsePair>(OnResponseBodyMouseLeave);
@@ -341,11 +351,11 @@ namespace EasyMock.UI
                 }
             });
 
+            IsServiceRunning = true;
             Task.Run(async () =>
             {
                 _listener.Start();
                 AppendOutput($"Mock service started.\n");
-                _windowService.DispatcherInvoke(() => _isServiceRunning = true);
 
                 while (!tokenSource.IsCancellationRequested)
                 {
@@ -375,7 +385,7 @@ namespace EasyMock.UI
         private void StopWebServer()
         {
             AppendOutput($"Mock service stopped.{Environment.NewLine}");
-            _windowService.DispatcherInvoke(() => _isServiceRunning = false);
+            IsServiceRunning = false;
             tokenSource?.Cancel();
         }
 

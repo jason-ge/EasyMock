@@ -2,6 +2,7 @@ using ControlzEx.Theming;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Windows.Threading;
+using Application = System.Windows.Application;
 
 namespace EasyMock.UI
 {
@@ -41,7 +42,7 @@ namespace EasyMock.UI
 
         public bool OpenReplayInQAWindow(ReplayInQAViewModel viewModel)
         {
-            var window = _provider.GetRequiredService<MockNodeEditorWindow>();
+            var window = _provider.GetRequiredService<ReplayInQAWindow>();
             window.DataContext = viewModel;
             return window.ShowDialog() ?? false;
         }
@@ -67,7 +68,7 @@ namespace EasyMock.UI
 
         public void DispatcherInvoke(Action action)
         {
-            action();
+            Application.Current.Dispatcher.Invoke(() => action());
         }
     }
 }

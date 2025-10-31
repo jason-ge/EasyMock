@@ -19,7 +19,10 @@ namespace EasyMock.UI
             services.AddHttpClient();
             services.AddSingleton<MainWindowViewModel>();
             services.AddTransient<IFileDialogService, FileDialogService>();
-            services.AddTransient<IDialogService, DialogService>();
+            services.AddTransient<MockNodeEditorWindow>();
+            services.AddTransient<NewMockFileWindow>();
+            services.AddTransient<ReplayInQAWindow>();
+            services.AddTransient<IWindowService, WindowService>();
 
             ServiceProvider = services.BuildServiceProvider();
             Config = new ConfigurationBuilder()

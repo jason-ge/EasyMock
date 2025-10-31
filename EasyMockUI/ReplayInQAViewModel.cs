@@ -10,7 +10,7 @@ using System.Windows.Input;
 namespace EasyMock.UI
 {
 
-    internal class BindableKeyValuePair : INotifyPropertyChanged
+    public class BindableKeyValuePair : INotifyPropertyChanged
     {
         public string Key { get; }
 
@@ -39,7 +39,7 @@ namespace EasyMock.UI
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
-    internal class ReplayInQAViewModel : INotifyPropertyChanged
+    public class ReplayInQAViewModel : INotifyPropertyChanged
     {
         private HttpClient _httpClient;
         private readonly string _host;

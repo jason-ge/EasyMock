@@ -1,5 +1,4 @@
-﻿using ControlzEx.Theming;
-using EasyMockLib;
+﻿using EasyMockLib;
 using EasyMockLib.MatchingPolicies;
 using EasyMockLib.Models;
 using Newtonsoft.Json;
@@ -11,11 +10,8 @@ using System.Net;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using System.Xml.Linq;
 using System.Xml.Serialization;
-using static System.Net.Mime.MediaTypeNames;
-using Application = System.Windows.Application;
 
 namespace EasyMock.UI
 {
@@ -34,10 +30,11 @@ namespace EasyMock.UI
         private readonly Dictionary<string, Dictionary<string, List<string>>> _restMatchConfig;
         private readonly Dictionary<string, Dictionary<string, List<string>>> _soapMatchConfig;
 
-        private readonly IDialogService _dialogService;
+        private readonly IWindowService _windowService;
         private readonly IFileDialogService _fileDialogService;
         private readonly StringBuilder _logOutput = new StringBuilder();
         private readonly MockRepository _mockRepository;
+        private readonly List<string> _startupErrors = [];
         private MockNode? _copiedNode;
         private bool _isServiceRunning;
 
@@ -86,8 +83,11 @@ namespace EasyMock.UI
             get => _logOutput.ToString();
         }
 
-        public MainWindowViewModel(IFileDialogService fileDialogService, IDialogService dialogService)
+        public MainWindowViewModel(IFileDialogService fileDialogService, IWindowService dialogService)
         {
+            _windowService = dialogService;
+            _fileDialogService = fileDialogService;
+
             _appRootFolder = AssignAppRoot();
             _bindingPortNumber = AssignBindingPort();
             _mockConfigFolder = AssignMockConfigFolder();
@@ -99,7 +99,7 @@ namespace EasyMock.UI
             _theme = App.Config["Theme"] ?? "Dark.Blue";
             _listener = new HttpListener { Prefixes = { $"http://localhost:{_bindingPortNumber}/" } };
             _mockRepository = new MockRepository(_restMatchConfig, _soapMatchConfig);
-            ThemeManager.Current.ChangeTheme(Application.Current, _theme);
+            _windowService.ChangeTheme(_theme);
 
             if (!string.IsNullOrEmpty(_mockFileFolder) && Directory.Exists(_mockFileFolder))
             {
@@ -145,47 +145,28 @@ namespace EasyMock.UI
             SaveMockNodeCommand = new RelayCommand<MockTreeNode?>(OnSaveMockNodeAction);
             TreeNodeDoubleClickCommand = new RelayCommand<MockTreeNode?>(OnTreeViewItemDoubleClick);
             TreeNodeRightClickCommand = new RelayCommand<MockTreeNode?>(OnTreeNodeRightClickCommand);
-
-            _dialogService = dialogService;
-            _fileDialogService = fileDialogService;
+            if (_startupErrors.Count > 0)
+            {
+                _windowService.DisplayStartupErrors(string.Join(Environment.NewLine, _startupErrors));
+            }
         }
 
         private string AssignAppRoot()
         {
             var appRootFolder = App.Config["AppRootFolder"];
-            if (string.IsNullOrEmpty(appRootFolder))
+            if (!string.IsNullOrEmpty(appRootFolder) && !Directory.Exists(appRootFolder))
             {
-                Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    MessageBox.Show(Application.Current.MainWindow, "AppRootFolder is not configured properly in appsettings.json.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }, DispatcherPriority.ApplicationIdle);
-                            }
-            if (Directory.Exists(appRootFolder) == false)
-            {
-                Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    MessageBox.Show(Application.Current.MainWindow, $"AppRootFolder '{appRootFolder}' does not exist.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }, DispatcherPriority.ApplicationIdle);
-                            }
+                _startupErrors.Add($"AppRootFolder '{appRootFolder}' does not exist.");
+            }
             return appRootFolder!;
         }
 
         private string AssignMockConfigFolder()
         {
             var mockConfigFolder = App.Config["MockConfigurationFolder"];
-            if (string.IsNullOrEmpty(mockConfigFolder))
+            if (!string.IsNullOrEmpty(mockConfigFolder) && !Directory.Exists(mockConfigFolder))
             {
-                Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    MessageBox.Show(Application.Current.MainWindow, "MockConfigurationFolder is not configured properly in appsettings.json.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }, DispatcherPriority.ApplicationIdle);
-            }
-            if (Directory.Exists(mockConfigFolder) == false)
-            {
-                Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    MessageBox.Show(Application.Current.MainWindow, $"MockConfigurationFolder '{mockConfigFolder}' does not exist.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }, DispatcherPriority.ApplicationIdle);
+                _startupErrors.Add($"MockConfigurationFolder '{mockConfigFolder}' does not exist.");
             }
             return mockConfigFolder!;
         }
@@ -196,30 +177,21 @@ namespace EasyMock.UI
 
             if (string.IsNullOrEmpty(mockFileFolder))
             {
-                Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    MessageBox.Show(Application.Current.MainWindow, "MockFileFolder is not configured properly in appsettings.json.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }, DispatcherPriority.ApplicationIdle);
+                _startupErrors.Add("MockFileFolder is not configured properly in appsettings.json.");
             }
-            if (Directory.Exists(mockFileFolder) == false)
+            else if (Directory.Exists(mockFileFolder) == false)
             {
-                Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    MessageBox.Show(Application.Current.MainWindow, $"MockFileFolder '{mockFileFolder}' does not exist.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }, DispatcherPriority.ApplicationIdle);
+                _startupErrors.Add($"MockFileFolder '{mockFileFolder}' does not exist.");
             }
             return mockFileFolder!;
         }
 
         private string AssignBindingPort()
         {
-            var bindingPortNumber = App.Config["BindingPort"];
+            var bindingPortNumber = App.Config["BindingPort"]??string.Empty;
             if (string.IsNullOrEmpty(bindingPortNumber))
             {
-                Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    MessageBox.Show("BindingPort is not configured properly in appsettings.json.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }, DispatcherPriority.ApplicationIdle);
+                _startupErrors.Add("BindingPort is not configured properly in appsettings.json.");
             }
             return bindingPortNumber!;
         }
@@ -315,9 +287,7 @@ namespace EasyMock.UI
         private void NewMockFile(object? parameter)
         {
             var viewModel = new NewMockFileViewModel();
-            var newMockFileWindow = new NewMockFileWindow() { DataContext = viewModel, Owner = Application.Current.MainWindow };
-
-            if (newMockFileWindow.ShowDialog() == true)
+            if (_windowService.OpenNewMockFileWindow(ref viewModel) == true)
             {
                 var fileName = Path.Combine(_mockFileFolder, viewModel.MockFileName);
                 if (File.Exists(fileName))
@@ -375,7 +345,7 @@ namespace EasyMock.UI
             {
                 _listener.Start();
                 AppendOutput($"Mock service started.\n");
-                Application.Current.Dispatcher.Invoke(() => _isServiceRunning = true);
+                _windowService.DispatcherInvoke(() => _isServiceRunning = true);
 
                 while (!tokenSource.IsCancellationRequested)
                 {
@@ -390,19 +360,22 @@ namespace EasyMock.UI
                     }
                 }
             });
-            Task.Run(() =>
+            if (!string.IsNullOrEmpty(_mockConfigFolder) && !string.IsNullOrEmpty(_appRootFolder))
             {
-                foreach (var file in Directory.GetFiles(_mockConfigFolder, "*.*", SearchOption.AllDirectories))
+                Task.Run(() =>
                 {
-                    CopyIfMockFileChanged(file);
-                }
-            });
+                    foreach (var file in Directory.GetFiles(_mockConfigFolder, "*.*", SearchOption.AllDirectories))
+                    {
+                        CopyIfMockFileChanged(file);
+                    }
+                });
+            }
         }
 
         private void StopWebServer()
         {
             AppendOutput($"Mock service stopped.{Environment.NewLine}");
-            Application.Current.Dispatcher.Invoke(() => _isServiceRunning = false);
+            _windowService.DispatcherInvoke(() => _isServiceRunning = false);
             tokenSource?.Cancel();
         }
 
@@ -611,12 +584,11 @@ namespace EasyMock.UI
         {
             if (node != null && node.Tag is MockFileNode mockFileNode && mockFileNode != null)
             {
-                var editor = new MockNodeEditorWindow();
-                if (editor.ShowDialog() == true)
+                var viewModel = new MockNodeEditorViewModel();
+                if (_windowService.OpenMockNodeEditWindow(ref viewModel))
                 {
                     try
                     {
-                        var viewModel = editor.DataContext as MockNodeEditorViewModel;
                         var newMockNode = new MockNode()
                         {
                             ServiceType = viewModel.ServiceType,
@@ -706,12 +678,8 @@ namespace EasyMock.UI
                     ResponseDelay = mockNode.Response.Delay.ToString(),
                     Description = mockNode.Description
                 };
-
-                viewModel.SelectedStatusCodeOption = viewModel.StatusCodeOptions
-                    .FirstOrDefault(o => o.Code == (int)mockNode.Response.StatusCode);
-
-                var mockNodeEditor = new MockNodeEditorWindow() { DataContext = viewModel, Owner = Application.Current.MainWindow };
-                if (mockNodeEditor.ShowDialog() == true)
+                viewModel.SelectedStatusCodeOption = viewModel.StatusCodeOptions.FirstOrDefault(o => o.Code == (int)mockNode.Response.StatusCode);
+                if (_windowService.OpenMockNodeEditWindow(ref viewModel) == true)
                 {
                     try
                     {
@@ -874,7 +842,7 @@ namespace EasyMock.UI
                 pair.StatusCode = node.Response.StatusCode;
             }
             pair.CanReplayInQA = serviceType == ServiceType.REST && !string.IsNullOrEmpty(_qaHost) && !string.IsNullOrEmpty(_qaCredential);
-            Application.Current.Dispatcher.Invoke(() =>
+            _windowService.DispatcherInvoke(() =>
                 {
                     RequestResponsePairs.Add(pair);
                 });
@@ -954,7 +922,7 @@ namespace EasyMock.UI
             {
                 if (RootNodes != null && RootNodes.Any(n => n.IsDirty))
                 {
-                    if (!_dialogService.ConfirmCloseWithUnsavedChanges())
+                    if (!_windowService.ConfirmCloseWithUnsavedChanges())
                     {
                         e.Cancel = true; // Cancel the close operation
                         return; // User chose not to close
@@ -962,7 +930,7 @@ namespace EasyMock.UI
                 }
             }
 
-            Application.Current.Shutdown();
+            _windowService.Shutdown();
         }
 
         private void OnResponseBodyMouseEnter(RequestResponsePair? pair)
@@ -998,12 +966,8 @@ namespace EasyMock.UI
         {
             if (pair == null) return;
             ReplayInQAViewModel viewModel = new ReplayInQAViewModel(pair, _qaHost, _qaCredential);
-            var replayWindow = new ReplayInQAWindow() { DataContext = viewModel, Owner = Application.Current.MainWindow };
-            if (replayWindow.ShowDialog() == true)
-            {
-            }
+            _windowService.OpenReplayInQAWindow(viewModel);
         }
-
 
         private MockTreeNode? FindTreeNode(MockNode? node)
         {

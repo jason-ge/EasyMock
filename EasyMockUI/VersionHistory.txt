@@ -6,3 +6,4 @@ v1.1.0 - Added following new features:
 v1.1.1 - Added http request headers display function.
 v1.1.2 - Added error handling when adding/editing the mock node; hightlight the added/edited mock node in treeview.
 v1.2.0 - Added "Replay In QA" function; Added MahApps.Metro package for styling; fix response body double click issue.
+v1.2.1 - Fix the startup error display issue. Move all window related operation out of main viewmodel to WindowService.

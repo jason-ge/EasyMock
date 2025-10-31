@@ -5,7 +5,7 @@ using System.Windows.Input;
 
 namespace EasyMock.UI
 {
-    internal class NewMockFileViewModel: INotifyPropertyChanged
+    public class NewMockFileViewModel: INotifyPropertyChanged
     {
         public ICommand OkCommand { get; }
         private string _mockFileName;

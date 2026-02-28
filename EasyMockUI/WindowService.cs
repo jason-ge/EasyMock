@@ -44,7 +44,7 @@ namespace EasyMock.UI
         {
             var window = _provider.GetRequiredService<ReplayInQAWindow>();
             window.DataContext = viewModel;
-            window.ShowDialog();
+            window.Show();
         }
 
         public void ChangeTheme(string theme)

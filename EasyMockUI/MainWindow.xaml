@@ -92,7 +92,7 @@
                 </i:Interaction.Triggers>
                 <TreeView.Resources>
                     <HierarchicalDataTemplate DataType="{x:Type local:MockTreeNode}" ItemsSource="{Binding Children}">
-                        <TextBlock Text="{Binding Header}" ToolTip="{Binding ToolTip}">
+                        <TextBlock Text="{Binding Header}">
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="PreviewMouseRightButtonDown">
                                 <i:InvokeCommandAction Command="{Binding DataContext.TreeNodeRightClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
@@ -102,7 +102,7 @@
                         </TextBlock>
                         <HierarchicalDataTemplate.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Header}" FontStyle="Italic">
+                                <TextBlock Text="{Binding Header}" FontStyle="Italic" ToolTip="{Binding ToolTip}">
                                 <i:Interaction.Triggers>
                                     <i:EventTrigger EventName="PreviewMouseRightButtonDown">
                                         <i:InvokeCommandAction Command="{Binding DataContext.TreeNodeRightClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
@@ -214,7 +214,7 @@
                                         </Expander>
                                         <Expander Margin="4">
                                             <Expander.Header>
-                                                <TextBlock Text="Response:" FontWeight="Bold" Margin="0,0,0,2"/>
+                                                <TextBlock Text="{Binding ResponseTitle}" FontWeight="Bold" Margin="0,0,0,2"/>
                                             </Expander.Header>
                                             <TextBox Text="{Binding ResponseBody}"
                                                  IsReadOnly="True"

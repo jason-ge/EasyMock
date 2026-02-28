@@ -10,7 +10,7 @@ public class RequestResponsePair
     {
         get
         {
-            return $"{Url} - {Method}: {StatusCode}";
+            return $"{Url} - {Method}: {StatusCode}";
         }
     }
 

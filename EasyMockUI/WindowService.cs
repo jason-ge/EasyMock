@@ -40,11 +40,11 @@ namespace EasyMock.UI
             return window.ShowDialog() ?? false;
         }
 
-        public bool OpenReplayInQAWindow(ReplayInQAViewModel viewModel)
+        public void OpenReplayInQAWindow(ReplayInQAViewModel viewModel)
         {
             var window = _provider.GetRequiredService<ReplayInQAWindow>();
             window.DataContext = viewModel;
-            return window.ShowDialog() ?? false;
+            window.ShowDialog();
         }
 
         public void ChangeTheme(string theme)

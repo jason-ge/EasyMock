@@ -5,7 +5,7 @@
         xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:local="clr-namespace:EasyMock.UI" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         Name="MainWindowUI"
-        Title="Easy Mock v1.2.1" Height="800" Width="1200">
+        Title="Easy Mock v1.2.7" Height="800" Width="1200">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing">
             <i:InvokeCommandAction Command="{Binding WindowCloseCommand}" PassEventArgsToCommand="True" />
@@ -50,6 +50,7 @@
                       Visibility="{Binding DataContext.SaveMenuItemVisibility, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"
                       CommandParameter="{Binding}"/>
         </ContextMenu>
+        <SolidColorBrush x:Key="HighlightBrush" Color="{DynamicResource MahApps.Colors.Highlight}" />
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </mah:MetroWindow.Resources>
     <Grid>
@@ -91,7 +92,7 @@
                 </i:Interaction.Triggers>
                 <TreeView.Resources>
                     <HierarchicalDataTemplate DataType="{x:Type local:MockTreeNode}" ItemsSource="{Binding Children}">
-                        <TextBlock Text="{Binding Header}">
+                        <TextBlock Text="{Binding Header}" ToolTip="{Binding ToolTip}">
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="PreviewMouseRightButtonDown">
                                 <i:InvokeCommandAction Command="{Binding DataContext.TreeNodeRightClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
@@ -135,7 +136,7 @@
                             </DataTrigger>
                             <DataTrigger Binding="{Binding IsHovered}" Value="True">
                                 <Setter Property="FontWeight" Value="Bold"/>
-                                <Setter Property="Background" Value="Yellow"/>
+                                <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -174,7 +175,6 @@
                                             <TextBox.Style>
                                                 <Style TargetType="TextBox">
                                                     <Setter Property="FontWeight" Value="Normal"/>
-                                                    <Setter Property="Foreground" Value="Black"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsErrorStatusCode}" Value="True">
                                                             <Setter Property="FontWeight" Value="Bold"/>
@@ -186,8 +186,11 @@
                                         </TextBox>
                                     </Expander.Header>
                                     <StackPanel>
-                                        <TextBlock Text="Headers:" FontWeight="Bold" Margin="0,0,0,2"/>
-                                        <TextBox Text="{Binding HeaderString, Mode=OneWay}"
+                                        <Expander Margin="4">
+                                            <Expander.Header>
+                                                <TextBlock Text="Headers:" FontWeight="Bold" Margin="0,0,0,2"/>
+                                            </Expander.Header>
+                                            <TextBox Text="{Binding HeaderString, Mode=OneWay}"
                                                  IsReadOnly="True"
                                                  TextWrapping="NoWrap"
                                                  Margin="10,0,0,6"
@@ -195,8 +198,12 @@
                                                  HorizontalAlignment="Stretch"
                                                  VerticalScrollBarVisibility="Auto"
                                                  HorizontalScrollBarVisibility="Auto"/>
-                                        <TextBlock Text="Request:" FontWeight="Bold" Margin="0,0,0,2"/>
-                                        <TextBox Text="{Binding RequestBody}"
+                                        </Expander>
+                                        <Expander Margin="4">
+                                            <Expander.Header>
+                                                <TextBlock Text="Request:" FontWeight="Bold" Margin="0,0,0,2"/>
+                                            </Expander.Header>
+                                            <TextBox Text="{Binding RequestBody}"
                                                  IsReadOnly="True"
                                                  TextWrapping="NoWrap"
                                                  Margin="10,0,0,6"
@@ -204,8 +211,12 @@
                                                  HorizontalAlignment="Stretch"
                                                  VerticalScrollBarVisibility="Auto"
                                                  HorizontalScrollBarVisibility="Auto"/>
-                                        <TextBlock Text="Response:" FontWeight="Bold" Margin="0,0,0,2"/>
-                                        <TextBox Text="{Binding ResponseBody}"
+                                        </Expander>
+                                        <Expander Margin="4">
+                                            <Expander.Header>
+                                                <TextBlock Text="Response:" FontWeight="Bold" Margin="0,0,0,2"/>
+                                            </Expander.Header>
+                                            <TextBox Text="{Binding ResponseBody}"
                                                  IsReadOnly="True"
                                                  TextWrapping="NoWrap"
                                                  Margin="10,0,0,6"
@@ -213,21 +224,22 @@
                                                  HorizontalAlignment="Stretch"
                                                  VerticalScrollBarVisibility="Auto"
                                                  HorizontalScrollBarVisibility="Auto">
-                                            <i:Interaction.Triggers>
-                                                <i:EventTrigger EventName="MouseEnter">
-                                                    <i:InvokeCommandAction Command="{Binding DataContext.ResponseBodyMouseEnterCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                <i:Interaction.Triggers>
+                                                    <i:EventTrigger EventName="MouseEnter">
+                                                        <i:InvokeCommandAction Command="{Binding DataContext.ResponseBodyMouseEnterCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                            CommandParameter="{Binding}" />
-                                                </i:EventTrigger>
-                                                <i:EventTrigger EventName="MouseLeave">
-                                                    <i:InvokeCommandAction Command="{Binding DataContext.ResponseBodyMouseLeaveCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    </i:EventTrigger>
+                                                    <i:EventTrigger EventName="MouseLeave">
+                                                        <i:InvokeCommandAction Command="{Binding DataContext.ResponseBodyMouseLeaveCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                            CommandParameter="{Binding}" />
-                                                </i:EventTrigger>
-                                                <i:EventTrigger EventName="MouseDoubleClick">
-                                                    <i:InvokeCommandAction Command="{Binding DataContext.ResponseBodyDoubleClickCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    </i:EventTrigger>
+                                                    <i:EventTrigger EventName="MouseDoubleClick">
+                                                        <i:InvokeCommandAction Command="{Binding DataContext.ResponseBodyDoubleClickCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                            CommandParameter="{Binding}" />
-                                                </i:EventTrigger>
-                                            </i:Interaction.Triggers>
-                                        </TextBox>
+                                                    </i:EventTrigger>
+                                                </i:Interaction.Triggers>
+                                            </TextBox>
+                                        </Expander>
                                         <Button Content="Replay in QA"
                                                 Width="100"
                                                 Margin="0,0,0,10"

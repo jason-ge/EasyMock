@@ -34,6 +34,22 @@ namespace EasyMock.UI
             }
         }
 
+        public string? ToolTip
+        {
+            get
+            {
+                if (Tag is MockFileNode fileNode)
+                {
+                    return null;
+                }
+                else if (Tag is MockNode mockNode)
+                {
+                    return !string.IsNullOrEmpty(mockNode.Description) ? mockNode.Description : null;
+                }
+                return null;
+            }
+        }
+
         public MockTreeNode(MockFileNode fileNode, NodeTypes nodeType)
         {
             NodeType = nodeType;
@@ -175,15 +191,19 @@ namespace EasyMock.UI
         private void OnPropertyChanged(string propertyName)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-        public void OnMockNodePropertyChanged(object? sender, PropertyChangedEventArgs e)
+        public void OnMockNodePropertyChanged(object? sender, string propertyName)
         {
-            if (e.PropertyName == nameof(MockNode.Url) || e.PropertyName == nameof(MockNode.MethodName))
+            if (!string.IsNullOrEmpty(propertyName))
             {
-                OnPropertyChanged(nameof(Header));
-            }
-            if (e.PropertyName == nameof(Response.StatusCode))
-            {
-                OnPropertyChanged(nameof(IsErrorStatusCode));
+                if (propertyName == nameof(MockNode.Url) || propertyName == nameof(MockNode.MethodName))
+                {
+                    OnPropertyChanged(nameof(Header));
+                }
+                if (propertyName == nameof(Response.StatusCode))
+                {
+                    OnPropertyChanged(nameof(IsErrorStatusCode));
+                }
+                OnPropertyChanged(propertyName);
             }
         }
     }

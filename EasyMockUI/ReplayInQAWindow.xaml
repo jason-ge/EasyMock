@@ -48,9 +48,10 @@
         </DataGrid>
         <TextBlock Text="Request:" FontWeight="Bold" Margin="0,0,0,2"/>
         <TextBox Text="{Binding RequestBody}"
-            TextWrapping="NoWrap"
+            AcceptsReturn="True"
+            TextWrapping="Wrap"
+            Height="200"
             Margin="10,0,0,6"
-            MaxHeight="200"
             HorizontalAlignment="Stretch"
             VerticalScrollBarVisibility="Auto"
             HorizontalScrollBarVisibility="Auto"/>

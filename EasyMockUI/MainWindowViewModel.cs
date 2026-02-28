@@ -210,7 +210,17 @@ namespace EasyMock.UI
         {
             if (File.Exists(configFile))
             {
-                return JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<string>>>>(File.ReadAllText(configFile)) ?? [];
+                var matchConfig = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<string>>>>(File.ReadAllText(configFile)) ?? [];
+                var caseInsensitiveMatchConfig = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var key in matchConfig.Keys)
+                {
+                    caseInsensitiveMatchConfig[key] = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var method in matchConfig[key].Keys)
+                    {
+                        caseInsensitiveMatchConfig[key][method] = matchConfig[key][method];
+                    }
+                }
+                return caseInsensitiveMatchConfig;
             }
             else
             {
@@ -625,6 +635,7 @@ namespace EasyMock.UI
                         mockFileNode.Nodes.Add(newMockNode);
                         node.Children.Add(new MockTreeNode(newMockNode) { Parent = node, IsDirty = true });
                         node.IsDirty = true;
+                        SyncMockLookup();
                     }
                     catch (Exception ex)
                     {
@@ -698,12 +709,12 @@ namespace EasyMock.UI
                         if (!mockNode.MethodName.Equals(viewModel.MethodName, StringComparison.OrdinalIgnoreCase))
                         {
                             mockNode.MethodName = viewModel.MethodName.Trim();
-                            node.OnMockNodePropertyChanged(this, new PropertyChangedEventArgs(nameof(MockNode.MethodName)));
+                            node.OnMockNodePropertyChanged(this, nameof(MockNode.MethodName));
                         }
                         if (urlChanged)
                         {
                             mockNode.Url = viewModel.Url.Trim();
-                            node.OnMockNodePropertyChanged(this, new PropertyChangedEventArgs(nameof(MockNode.Url)));
+                            node.OnMockNodePropertyChanged(this, nameof(MockNode.Url));
                         }
 
                         if (mockNode.ServiceType == ServiceType.REST && mockNode.MethodName == "GET")
@@ -720,9 +731,13 @@ namespace EasyMock.UI
                         if ((int)mockNode.Response.StatusCode != viewModel.SelectedStatusCodeOption?.Code)
                         {
                             mockNode.Response.StatusCode = (HttpStatusCode)viewModel.SelectedStatusCodeOption.Code;
-                            node.OnMockNodePropertyChanged(this, new PropertyChangedEventArgs(nameof(Response.StatusCode)));
+                            node.OnMockNodePropertyChanged(this, nameof(Response.StatusCode));
                         }
                         mockNode.Description = viewModel.Description;
+                        if (!string.IsNullOrEmpty(mockNode.Description))
+                        {
+                            node.OnMockNodePropertyChanged(this, nameof(MockTreeNode.ToolTip));
+                        }
                         node.IsDirty = true;
                         if (node.Parent is MockTreeNode mockFileNode)
                         {

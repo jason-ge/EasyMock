@@ -1,4 +1,4 @@
-using EasyMockLib.Models;
+﻿using EasyMockLib.Models;
 using System.Collections.Specialized;
 using System.Net;
 
@@ -10,7 +10,19 @@ public class RequestResponsePair
     {
         get
         {
-            return $"{Url} - {Method}: {StatusCode} {ResponseTimeInMs}ms";
+            return $"{Url} - {Method}: {StatusCode}";
+        }
+    }
+
+    public string ResponseTitle
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(MockNodeSource?.Description))
+            {
+                return $"Response ({MockNodeSource.Description}) in {ResponseTimeInMs}ms:";
+            }
+            return $"Response in {ResponseTimeInMs}ms:";
         }
     }
 

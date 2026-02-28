@@ -36,6 +36,7 @@ namespace EasyMock.UI
                 new StatusCodeOption { Code = 200, Name = HttpStatusCode.OK.ToString() },
                 new StatusCodeOption { Code = 201, Name = HttpStatusCode.Created.ToString() },
                 new StatusCodeOption { Code = 204, Name = HttpStatusCode.NoContent.ToString() },
+                new StatusCodeOption { Code = 206, Name = HttpStatusCode.PartialContent.ToString() },
                 new StatusCodeOption { Code = 400, Name = HttpStatusCode.BadRequest.ToString() },
                 new StatusCodeOption { Code = 401, Name = HttpStatusCode.Unauthorized.ToString() },
                 new StatusCodeOption { Code = 403, Name = HttpStatusCode.Forbidden.ToString() },

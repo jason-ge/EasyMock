@@ -7,9 +7,9 @@ v1.1.1 - Added http request headers display function.
 v1.1.2 - Added error handling when adding/editing the mock node; hightlight the added/edited mock node in treeview.
 v1.2.0 - Added "Replay In QA" function; Added MahApps.Metro package for styling; fix response body double click issue.
 v1.2.1 - Fix the startup error display issue. Move all window related operation out of main viewmodel to WindowService.
-v1.2.2 - Added tooltip to show description for each mock node in treeview; added code to sync the mock lookup table during the add mock node operation.
-v1.2.3 - Fix the issue the tooltip not update after changing the description.
-v1.2.4 - Added the description into request/response title; Fixed the issue the request body in Replay window not wrap.
-v1.2.5 - Make the ReplayInQA window modeless.
-v1.2.6 - Add Http Status Code 206.
-v1.2.7 - Rearranged the layout of the request/response details in main window.
+v1.2.2  - Added tooltip to show description for each mock node in treeview; added code to sync the mock lookup table during the add mock node operation.
+v1.2.3  - Fix the issue the tooltip not update after changing the description.
+v1.2.4  - Added the description into request/response title; Fixed the issue the request body in Replay window not wrap.
+v1.2.5  - Make the ReplayInQA window modeless.
+v1.2.6  - Add Http Status Code 206.
+v1.2.7  - Rearranged the layout of the request/response details in main window.
